@@ -18,7 +18,7 @@ const MAX_FRAMES = { spellcast: 7, walk: 8, slash: 6 };
 
 export const WeaponAnchorEditor: React.FC<WeaponAnchorEditorProps> = ({
   config = { body: 'male', skinColor: 'light' },
-  darkMode = true,
+  darkMode: _darkMode = true,
   onClose
 }) => {
   const [action, setAction] = useState<Action>('walk');

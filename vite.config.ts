@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-import { weaponPipelinePlugin } from './src/DEV_MODE_ONLY/weaponPipelinePlugin'
+import { weaponPipelinePlugin } from './src/DEV_MODE_ONLY/weaponPipelinePlugin.ts'
 
 // https://vite.dev/config/
 export default defineConfig({

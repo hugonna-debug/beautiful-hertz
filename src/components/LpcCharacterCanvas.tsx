@@ -8,7 +8,7 @@ import { WINGS_CATALOG } from '../data/wingsCatalog';
 import { TOPS_CATALOG } from '../data/topsCatalog';
 import { CAPES_CATALOG } from '../data/capesCatalog';
 import { getPantsFileUrl } from '../data/pantsCatalog';
-import { getWeaponFileUrl } from '../data/weaponsCatalog';
+import { getWeaponFileUrl, getWeaponAnchorData } from '../data/weaponsCatalog';
 import { FABRIC_PALETTES, METAL_PALETTES } from '../data/colorPalettesCatalog';
 import { getHandSocket } from '../utils/handSockets';
 
@@ -559,13 +559,14 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
           const handX = (socket.x + manualOffsetX) * scaleX;
           const handY = (socket.y + manualOffsetY) * scaleY;
 
-          const drawW = offscreen.width;
-          const drawH = offscreen.height;
+          const weaponScale = (equippedWeapon as any)?.scale ?? anchorData?.scale ?? 1.0;
+          const drawW = offscreen.width * weaponScale;
+          const drawH = offscreen.height * weaponScale;
 
-          const customPivotX = (equippedWeapon as any)?.pivotX ?? (equippedWeapon as any)?.baseX ?? socket.pivotX ?? 20;
-          const customPivotY = (equippedWeapon as any)?.pivotY ?? (equippedWeapon as any)?.baseY ?? socket.pivotY ?? 44;
-          const pX = customPivotX * scaleX;
-          const pY = customPivotY * scaleY;
+          const customPivotX = anchorData?.baseX ?? (equippedWeapon as any)?.pivotX ?? (equippedWeapon as any)?.baseX ?? socket.pivotX ?? 20;
+          const customPivotY = anchorData?.baseY ?? (equippedWeapon as any)?.pivotY ?? (equippedWeapon as any)?.baseY ?? socket.pivotY ?? 44;
+          const pX = customPivotX * scaleX * weaponScale;
+          const pY = customPivotY * scaleY * weaponScale;
 
           offCtx.save();
           offCtx.translate(handX, handY);

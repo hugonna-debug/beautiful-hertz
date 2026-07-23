@@ -3,6 +3,7 @@ import { GameState, Equipment, EquipmentSlot, ItemSubstat, SubstatType } from '.
 import { SUBSTAT_RANGES } from '../hooks/useGameState';
 import { getRingSpriteInfo } from '../utils/ringCatalog';
 import { BODY_ARMOR_MAP, BOOTS_MAP, BODY_ARMOR_SPRITES, BOOTS_SPRITES, WEAPON_SPRITES } from '../data/minMaxLookup';
+import { getWeaponFileUrl } from '../data/weaponsCatalog';
 import {
   SwordIcon,
   ShieldIcon,
@@ -175,9 +176,12 @@ export const GearManager: React.FC<GearManagerProps> = ({
           const hash = Math.abs(item.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
           spriteUrl = BOOTS_SPRITES[hash % BOOTS_SPRITES.length];
         }
-      } else if (item.slot === 'weapon' && WEAPON_SPRITES.length > 0) {
-        const hash = Math.abs(item.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
-        spriteUrl = WEAPON_SPRITES[hash % WEAPON_SPRITES.length];
+      } else if (item.slot === 'weapon') {
+        spriteUrl = getWeaponFileUrl(item.name) || getWeaponFileUrl(cleanId);
+        if (!spriteUrl && WEAPON_SPRITES.length > 0) {
+          const hash = Math.abs(item.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
+          spriteUrl = WEAPON_SPRITES[hash % WEAPON_SPRITES.length];
+        }
       }
     }
 

@@ -29,6 +29,7 @@ export interface SpriteBatchItem {
   tipAnchor?: Vector2D;
   angle?: number;
   distance?: number;
+  scale?: number;
   isMarked?: boolean;
 }
 
@@ -87,6 +88,7 @@ export interface UnverifiedWeapon {
     tipY: number;
     angle: number;
     distance: number;
+    scale?: number;
   };
 }
 
@@ -115,7 +117,7 @@ export async function fetchSkippedWeapons(): Promise<UnverifiedWeapon[]> {
 
 export async function anchorWeapon(
   filename: string,
-  anchor: { baseX: number; baseY: number; tipX: number; tipY: number; angle: number; distance: number }
+  anchor: { baseX: number; baseY: number; tipX: number; tipY: number; angle: number; distance: number; scale?: number }
 ): Promise<{ success: boolean; message: string; newUrl?: string }> {
   const res = await fetch('/dev-api/weapons/anchor', {
     method: 'POST',

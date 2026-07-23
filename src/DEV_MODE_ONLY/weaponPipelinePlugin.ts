@@ -77,15 +77,15 @@ export function weaponPipelinePlugin(): Plugin {
               const srcPath = path.join(UNVERIFIED_DIR, filename);
               const destPath = path.join(ANCHORED_DIR, filename);
 
-              if (!fs.existsSync(srcPath)) {
+              if (fs.existsSync(srcPath)) {
+                // Move sprite from unverified to anchored folder
+                fs.copyFileSync(srcPath, destPath);
+                fs.unlinkSync(srcPath);
+              } else if (!fs.existsSync(destPath)) {
                 res.statusCode = 404;
                 res.end(JSON.stringify({ error: `File not found: ${filename}` }));
                 return;
               }
-
-              // Move sprite to anchored folder
-              fs.copyFileSync(srcPath, destPath);
-              fs.unlinkSync(srcPath);
 
               // Save anchor metadata as sidecar JSON
               const jsonFilename = filename.replace(/\.(png|jpg|jpeg|gif|webp|bmp)$/i, '.anchor.json');

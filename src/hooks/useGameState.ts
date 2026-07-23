@@ -22,6 +22,7 @@ export const SUBSTAT_RANGES: Record<SubstatType, { min: number; max: number; isP
 };
 
 import { ENEMY_SPECIES_MAP, FALLBACK_ENEMY_SPRITES, WEAPON_SPRITES, BODY_ARMOR_SPRITES, BOOTS_SPRITES } from '../data/minMaxLookup';
+import { WEAPONS_CATALOG } from '../data/weaponsCatalog';
 
 export const getEnemyForStage = (stage: number, tier: number): RpgEnemy => {
   const isBoss = stage % 10 === 0;
@@ -334,9 +335,26 @@ export const generateRandomLoot = (stage: number, slot?: EquipmentSlot, luckLeve
   }
 
   let sprite: string | undefined = undefined;
-  if (chosenSlot === 'weapon' && WEAPON_SPRITES.length > 0) {
-    const idx = Math.floor(Math.random() * WEAPON_SPRITES.length);
-    sprite = WEAPON_SPRITES[idx];
+  if (chosenSlot === 'weapon') {
+    const validWeapons = WEAPONS_CATALOG.filter(w => w.id !== 'none');
+    if (validWeapons.length > 0) {
+      let pool = validWeapons.filter(w => w.rarity === itemRarity);
+      if (pool.length === 0) {
+        if (itemRarity === 'common') {
+          pool = validWeapons.filter(w => w.isCommonOrStarter);
+        } else {
+          pool = validWeapons.filter(w => !w.isCommonOrStarter);
+        }
+      }
+      if (pool.length === 0) pool = validWeapons;
+
+      const chosenWeapon = pool[Math.floor(Math.random() * pool.length)];
+      name = chosenWeapon.name;
+      sprite = chosenWeapon.url;
+    } else if (WEAPON_SPRITES.length > 0) {
+      const idx = Math.floor(Math.random() * WEAPON_SPRITES.length);
+      sprite = WEAPON_SPRITES[idx];
+    }
   } else if (chosenSlot === 'body' && BODY_ARMOR_SPRITES.length > 0) {
     const idx = Math.floor(Math.random() * BODY_ARMOR_SPRITES.length);
     sprite = BODY_ARMOR_SPRITES[idx];
@@ -390,12 +408,13 @@ export const useGameState = () => {
 
   const [state, setState] = useState<GameState>(() => {
     // Default state template helper
+    const starterCatalogWeapon = WEAPONS_CATALOG.find(w => w.id === '1') || WEAPONS_CATALOG.find(w => w.isCommonOrStarter) || WEAPONS_CATALOG[1];
     const startWeapon = generateRandomLoot(1, 'weapon');
     startWeapon.id = 'wpn_starter_crusader_blade';
-    startWeapon.name = 'Novice Crusader Blade';
+    startWeapon.name = starterCatalogWeapon ? starterCatalogWeapon.name : 'Novice Crusader Blade';
     startWeapon.rarity = 'common';
     startWeapon.baseValue = 10;
-    startWeapon.sprite = WEAPON_SPRITES[0];
+    startWeapon.sprite = starterCatalogWeapon ? starterCatalogWeapon.url : '/assets/anchored_weapons/1.png';
     startWeapon.substats = [
       { type: 'percent_atk', value: 0.04, locked: false, rarity: 'common' },
       { type: 'crit_rate', value: 0.02, locked: false, rarity: 'common' },

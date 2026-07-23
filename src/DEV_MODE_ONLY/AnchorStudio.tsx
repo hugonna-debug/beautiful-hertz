@@ -89,6 +89,7 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
         tipAnchor: w.anchor ? { x: w.anchor.tipX, y: w.anchor.tipY } : undefined,
         angle: w.anchor?.angle,
         distance: w.anchor?.distance,
+        scale: w.anchor?.scale ?? 1.0,
         isMarked: !!w.anchor,
       })));
       setPipelineStats(stats);
@@ -389,9 +390,11 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
         ...existing,
         tip: { x: frameX, y: frameY }
       };
-      const { angle, distance } = computeAnchorVector(updatedSpec.base, updatedSpec.tip);
-      updatedSpec.angle = angle;
-      updatedSpec.distance = distance;
+      if (updatedSpec.base && updatedSpec.tip) {
+        const { angle, distance } = computeAnchorVector(updatedSpec.base, updatedSpec.tip);
+        updatedSpec.angle = angle;
+        updatedSpec.distance = distance;
+      }
 
       setFrameAnchorsMap(prev => ({
         ...prev,
@@ -570,6 +573,7 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
         tipY: sprite.tipAnchor.y,
         angle: sprite.angle || 0,
         distance: sprite.distance || 0,
+        scale: sprite.scale || 1.0,
       });
       setPipelineMessage(`✅ ${result.message}`);
       // Remove from local list and stay at same index (shows next weapon)
@@ -645,6 +649,12 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
     } finally {
       setPipelineLoading(false);
     }
+  };
+
+  const updateWeaponScale = (newScale: number) => {
+    setBatchSprites(prev => prev.map((item, idx) =>
+      idx === activeBatchIndex ? { ...item, scale: newScale } : item
+    ));
   };
 
   const advanceBatchItem = () => {
@@ -1305,7 +1315,62 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
                     <div><b style={{ color: '#38bdf8' }}>Tip X:</b> {activeSprite.tipAnchor?.x ?? '--'}px</div>
                     <div><b style={{ color: '#38bdf8' }}>Tip Y:</b> {activeSprite.tipAnchor?.y ?? '--'}px</div>
                     <div><b>Angle:</b> {activeSprite.angle ?? '--'}°</div>
-                    <div><b>Distance:</b> {activeSprite.distance ?? '--'}px</div>
+                    <div><b style={{ color: '#f59e0b' }}>Scale:</b> {Math.round((activeSprite.scale || 1.0) * 100)}%</div>
+                  </div>
+                </div>
+
+                {/* WEAPON SCALE CONTROLS CARD */}
+                <div style={{ backgroundColor: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid #f59e0b', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#f59e0b', fontWeight: 800 }}>
+                      🔍 Weapon Scale
+                    </h4>
+                    <b style={{ color: '#f59e0b', fontSize: '0.95rem' }}>{Math.round((activeSprite.scale || 1.0) * 100)}%</b>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <button
+                      onClick={() => updateWeaponScale(Math.max(0.3, Math.round(((activeSprite.scale || 1.0) - 0.05) * 100) / 100))}
+                      style={{ width: '32px', height: '32px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#fff', fontWeight: 900, borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="range"
+                      min={0.3}
+                      max={2.0}
+                      step={0.05}
+                      value={activeSprite.scale || 1.0}
+                      onChange={e => updateWeaponScale(Number(e.target.value))}
+                      style={{ flex: 1, accentColor: '#f59e0b' }}
+                    />
+                    <button
+                      onClick={() => updateWeaponScale(Math.min(2.0, Math.round(((activeSprite.scale || 1.0) + 0.05) * 100) / 100))}
+                      style={{ width: '32px', height: '32px', backgroundColor: '#1e293b', border: '1px solid #334155', color: '#fff', fontWeight: 900, borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
+                    {[0.5, 0.75, 1.0, 1.25, 1.5].map(sVal => (
+                      <button
+                        key={sVal}
+                        onClick={() => updateWeaponScale(sVal)}
+                        style={{
+                          padding: '0.2rem 0.4rem',
+                          fontSize: '0.7rem',
+                          borderRadius: '4px',
+                          border: (activeSprite.scale || 1.0) === sVal ? '1px solid #f59e0b' : '1px solid #334155',
+                          backgroundColor: (activeSprite.scale || 1.0) === sVal ? '#78350f' : '#0f172a',
+                          color: (activeSprite.scale || 1.0) === sVal ? '#fde047' : '#94a3b8',
+                          fontWeight: 800,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {sVal * 100}%
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -1525,6 +1590,7 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
                       sprite: previewModalWeapon.url,
                       baseX: previewModalWeapon.baseAnchor?.x,
                       baseY: previewModalWeapon.baseAnchor?.y,
+                      scale: previewModalWeapon.scale || 1.0,
                     } as any}
                     action="slash"
                     direction={modalDirection}
@@ -1638,8 +1704,8 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
                       <b style={{ color: '#38bdf8', fontSize: '1.2rem' }}>{previewModalWeapon.angle ?? '--'}°</b>
                     </div>
                     <div style={{ backgroundColor: '#121827', padding: '0.8rem', borderRadius: '6px', border: '1px solid #1f293d' }}>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block' }}>Vector Distance:</span>
-                      <b style={{ color: '#38bdf8', fontSize: '1.2rem' }}>{previewModalWeapon.distance ?? '--'} px</b>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block' }}>Weapon Scale:</span>
+                      <b style={{ color: '#f59e0b', fontSize: '1.2rem' }}>{Math.round((previewModalWeapon.scale || 1.0) * 100)}%</b>
                     </div>
                   </div>
                 </div>
