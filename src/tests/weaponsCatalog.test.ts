@@ -3,18 +3,18 @@ import { WEAPONS_CATALOG, getWeaponFileUrl, getWeaponAnchorData } from '../data/
 import { auditLayerSpecs, getCharacterLayerSpecs } from '../components/LpcCharacterCanvas';
 
 describe('Weapons Catalog & Stance Unit Tests', () => {
-  it('should load WEAPONS_CATALOG with all anchored weapons including none', () => {
-    expect(WEAPONS_CATALOG.length).toBeGreaterThanOrEqual(30);
+  it('should load WEAPONS_CATALOG with all 256x256 anchored weapons including none', () => {
+    expect(WEAPONS_CATALOG.length).toBeGreaterThanOrEqual(25);
     expect(WEAPONS_CATALOG[0].id).toBe('none');
   });
 
-  it('should include numbered starter/common gear weapons in the catalog', () => {
-    const starterBlade = WEAPONS_CATALOG.find(w => w.id === '1');
+  it('should include 256x256 starter/common gear weapons in the catalog', () => {
+    const starterBlade = WEAPONS_CATALOG.find(w => w.id === 'valiant_crusader_blade');
     expect(starterBlade).toBeDefined();
-    expect(starterBlade?.name).toBe('Novice Crusader Blade');
+    expect(starterBlade?.name).toBe('Valiant Crusader Blade');
     expect(starterBlade?.isCommonOrStarter).toBe(true);
-    expect(starterBlade?.anchor?.baseX).toBe(32);
-    expect(starterBlade?.anchor?.baseY).toBe(51);
+    expect(starterBlade?.anchor?.baseX).toBe(13);
+    expect(starterBlade?.anchor?.baseY).toBe(50);
   });
 
   it('should include named legendary and epic weapons in the catalog', () => {
@@ -26,16 +26,16 @@ describe('Weapons Catalog & Stance Unit Tests', () => {
   });
 
   it('should resolve correct weapon file URL by ID or Name', () => {
-    expect(getWeaponFileUrl('1')).toBe('/assets/anchored_weapons/1.png');
+    expect(getWeaponFileUrl('valiant_crusader_blade')).toBe('/assets/anchored_weapons/valiant_crusader_blade.png');
     expect(getWeaponFileUrl('cosmic_void_katana')).toBe('/assets/anchored_weapons/cosmic_void_katana.png');
     expect(getWeaponFileUrl('none')).toBe('');
   });
 
   it('should resolve anchor JSON data via getWeaponAnchorData', () => {
-    const anchor1 = getWeaponAnchorData('1');
-    expect(anchor1).not.toBeNull();
-    expect(anchor1?.baseX).toBe(32);
-    expect(anchor1?.baseY).toBe(51);
+    const anchorBlade = getWeaponAnchorData('valiant_crusader_blade');
+    expect(anchorBlade).not.toBeNull();
+    expect(anchorBlade?.baseX).toBe(13);
+    expect(anchorBlade?.baseY).toBe(50);
 
     const anchorKatana = getWeaponAnchorData('/assets/anchored_weapons/cosmic_void_katana.png');
     expect(anchorKatana).not.toBeNull();
@@ -49,14 +49,14 @@ describe('Weapons Catalog & Stance Unit Tests', () => {
         bodyType: 'male',
         skinTone: 'light',
         headModel: 'human_male',
-        weapon: '1'
+        weapon: 'valiant_crusader_blade'
       },
       'slash',
       null,
       false
     );
 
-    const hasWeapon = layers.some(l => l.url.includes('1.png'));
+    const hasWeapon = layers.some(l => l.url.includes('valiant_crusader_blade.png'));
     expect(hasWeapon).toBe(true);
 
     const audit = auditLayerSpecs(layers);

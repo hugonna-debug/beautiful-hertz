@@ -559,7 +559,8 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
           const handX = (socket.x + manualOffsetX) * scaleX;
           const handY = (socket.y + manualOffsetY) * scaleY;
 
-          const weaponScale = (equippedWeapon as any)?.scale ?? anchorData?.scale ?? 1.0;
+          const anchorData = getWeaponAnchorData(equippedWeapon?.sprite || equippedWeapon?.id || activeConfig.weapon || weaponEntry.spec.url);
+          const weaponScale = (equippedWeapon as any)?.scale ?? 1.0;
           const drawW = offscreen.width * weaponScale;
           const drawH = offscreen.height * weaponScale;
 

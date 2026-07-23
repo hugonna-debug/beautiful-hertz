@@ -14,7 +14,7 @@ describe('Idle Stats Reforged - GameState Hook & Formulas', () => {
     expect(result.current.state.heroName).toBe('Valiant Crusader');
     expect(result.current.state.level).toBe(1);
     expect(result.current.state.equippedWeapon).not.toBeNull();
-    expect(result.current.state.equippedWeapon?.name).toBe('Novice Crusader Blade');
+    expect(result.current.state.equippedWeapon?.name).toBe('Valiant Crusader Blade');
     expect(result.current.state.equippedBody).toBeNull();
     expect(result.current.state.autoAdvance).toBe(true);
   });

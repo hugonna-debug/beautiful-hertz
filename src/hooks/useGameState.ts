@@ -408,13 +408,13 @@ export const useGameState = () => {
 
   const [state, setState] = useState<GameState>(() => {
     // Default state template helper
-    const starterCatalogWeapon = WEAPONS_CATALOG.find(w => w.id === '1') || WEAPONS_CATALOG.find(w => w.isCommonOrStarter) || WEAPONS_CATALOG[1];
+    const starterCatalogWeapon = WEAPONS_CATALOG.find(w => w.id === 'valiant_crusader_blade') || WEAPONS_CATALOG.find(w => w.isCommonOrStarter) || WEAPONS_CATALOG[1];
     const startWeapon = generateRandomLoot(1, 'weapon');
     startWeapon.id = 'wpn_starter_crusader_blade';
-    startWeapon.name = starterCatalogWeapon ? starterCatalogWeapon.name : 'Novice Crusader Blade';
+    startWeapon.name = starterCatalogWeapon ? starterCatalogWeapon.name : 'Valiant Crusader Blade';
     startWeapon.rarity = 'common';
     startWeapon.baseValue = 10;
-    startWeapon.sprite = starterCatalogWeapon ? starterCatalogWeapon.url : '/assets/anchored_weapons/1.png';
+    startWeapon.sprite = starterCatalogWeapon ? starterCatalogWeapon.url : '/assets/anchored_weapons/valiant_crusader_blade.png';
     startWeapon.substats = [
       { type: 'percent_atk', value: 0.04, locked: false, rarity: 'common' },
       { type: 'crit_rate', value: 0.02, locked: false, rarity: 'common' },

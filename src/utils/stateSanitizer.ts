@@ -94,8 +94,6 @@ export function migrateItem(item: any): Equipment | null {
     }
   }
 
-  delete item.level;
-
   return {
     id: item.id || `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     name: item.name || 'Unknown Relic',
