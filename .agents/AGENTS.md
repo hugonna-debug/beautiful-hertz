@@ -23,3 +23,26 @@
 
 5. **Overlay Artifact Cleanliness**:
    - Avoid creating un-cleared DOM overlay elements for hit/slash graphics that leave black square artifacts at animation end. Use clean CSS filter drop-shadows or self-cleaning canvas overlays.
+
+### Standalone Rule: generate-sword
+
+1. **Category Enforcement (Melee Only)**:
+   - NEVER generate ranged weapons (bows, crossbows, firearms, magic wands, staves).
+   - ONLY generate melee weapons: *Swords, Greatswords, Katanas, Daggers, Battleaxes, Warhammers, Maces, Halberds, Spears, Scythes, Rapiers, Sabers, Claws, Flails*.
+
+2. **Strict Weapon Orientation Rule**:
+   - The **handle / grip** MUST always be positioned in the **bottom-left** corner of the sprite canvas.
+   - The **main blade / hammer head / damage-dealing end** MUST point diagonally towards the **top-right / right side**.
+
+3. **Format & Resolution Requirement**:
+   - Target resolution: **256x256 pixels**.
+   - Format: **`.png` with 100% transparent alpha channel**.
+
+4. **Streamlined Single-Command Execution Loop**:
+   - Generate raw sprite via `generate_image` tool with a solid bright white background prompt specifying bottom-left handle / top-right blade diagonal orientation.
+   - Run Python background removal and resize script `scratch/process_weapon.py`:
+     ```bash
+     python scratch/process_weapon.py "<input_raw_jpg>" "public/assets/unverified_weapons/<weapon_name>.png"
+     ```
+   - Automatically outputs clean 256x256 PNGs directly into `public/assets/unverified_weapons/` for Anchor Studio verification.
+

@@ -1270,7 +1270,7 @@ export const BattleConsole: React.FC<BattleConsoleProps> = ({
           /* ANIMATED 2D COMBAT ARENA VIEW */
           <div style={{
             position: 'relative',
-            height: '180px',
+            height: '220px',
             background: state.darkMode ? '#09090b' : '#111827',
             border: '3px solid #000',
             overflow: 'visible',
@@ -1303,15 +1303,13 @@ export const BattleConsole: React.FC<BattleConsoleProps> = ({
               ARENA CLASH // STAGE {activeStageId}
             </div>
 
-
-
             {/* PLAYER AVATAR CONTAINER */}
             <div 
               key={`player-anim-${attackTriggerId}`}
               style={{
                 position: 'relative',
-                width: '120px',
-                height: '90px',
+                width: '140px',
+                height: '140px',
                 overflow: 'visible',
                 animation: playerAttacking 
                   ? `playerLungeAttack ${Number((0.60 / Math.max(0.5, heroStats.atkSpeed || 1.0)).toFixed(3))}s cubic-bezier(0.25, 0.8, 0.25, 1.2)` 
@@ -1319,7 +1317,8 @@ export const BattleConsole: React.FC<BattleConsoleProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                filter: playerSlashed ? 'brightness(1.8) drop-shadow(0 0 10px rgba(239, 68, 68, 0.9))' : undefined
+                filter: playerSlashed ? 'brightness(1.8) drop-shadow(0 0 10px rgba(239, 68, 68, 0.9))' : undefined,
+                zIndex: 10
               }}
             >
               <LpcCharacterCanvas
@@ -1328,10 +1327,11 @@ export const BattleConsole: React.FC<BattleConsoleProps> = ({
                 hideWeapon={false}
                 hideArmor={false}
                 action="slash"
-                width={85}
-                height={85}
+                width={120}
+                height={120}
                 direction="east"
                 frame={[1, 2, 3, 4, 5, 4, 3, 2][spriteFrame % 8]}
+                style={{ overflow: 'visible' }}
               />
               {playerSlashed && <div className="arena-slash-overlay-player" />}
             </div>

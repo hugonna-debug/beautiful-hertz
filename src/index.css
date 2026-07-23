@@ -455,9 +455,9 @@ body.dark-mode .scrap-all-btn {
 }
 @keyframes playerLungeAttack {
   0% { transform: translate3d(0px, 0px, 0) scale(1) rotate(0deg); filter: drop-shadow(0 0 0px var(--neon-cyan)); }
-  25% { transform: translate3d(-8px, 3px, 0) scale(0.96) rotate(-5deg); filter: drop-shadow(0 0 4px var(--neon-cyan)); }
-  55% { transform: translate3d(45px, -8px, 0) scale(1.14) rotate(12deg); filter: drop-shadow(0 0 16px var(--neon-cyan)); }
-  75% { transform: translate3d(18px, -2px, 0) scale(1.04) rotate(4deg); filter: drop-shadow(0 0 8px var(--neon-cyan)); }
+  20% { transform: translate3d(-12px, 3px, 0) scale(0.96) rotate(-5deg); filter: drop-shadow(0 0 4px var(--neon-cyan)); }
+  55% { transform: translate3d(120px, -8px, 0) scale(1.15) rotate(12deg); filter: drop-shadow(0 0 18px var(--neon-cyan)); }
+  75% { transform: translate3d(35px, -2px, 0) scale(1.04) rotate(4deg); filter: drop-shadow(0 0 8px var(--neon-cyan)); }
   100% { transform: translate3d(0px, 0px, 0) scale(1) rotate(0deg); filter: drop-shadow(0 0 0px var(--neon-cyan)); }
 }
 
