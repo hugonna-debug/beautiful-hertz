@@ -1,0 +1,2 @@
+[36mvite v8.1.5 [32mbuilding client environment for production...[36m[39m
+[2Ktransforming...✓ 34 modules transformed.

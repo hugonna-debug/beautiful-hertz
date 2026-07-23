@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#080313"/>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#a855f7" stroke-width="2"/>
+  
+  <!-- Glowing Shield Base -->
+  <polygon points="32,8 52,16 52,38 32,54 12,38 12,16" fill="#180b2d" stroke="#06ffa1" stroke-width="2.5"/>
+  <polygon points="32,13 46,19 46,36 32,48 18,36 18,19" fill="#2e1065" stroke="#38bdf8" stroke-width="1.5"/>
+
+  <!-- Neon Crossed Swords -->
+  <!-- Sword 1 -->
+  <line x1="16" y1="46" x2="48" y2="14" stroke="#06ffa1" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="16" y1="46" x2="48" y2="14" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Hilt 1 -->
+  <line x1="18" y1="40" x2="24" y2="46" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Sword 2 -->
+  <line x1="48" y1="46" x2="16" y2="14" stroke="#ec4899" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="48" y1="46" x2="16" y2="14" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Hilt 2 -->
+  <line x1="46" y1="40" x2="40" y2="46" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Center Gem Core -->
+  <polygon points="32,24 38,30 32,36 26,30" fill="#fbbf24" stroke="#ffffff" stroke-width="1"/>
+</svg>
