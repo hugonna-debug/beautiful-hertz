@@ -80,12 +80,17 @@ export const GearManager: React.FC<GearManagerProps> = ({
   const { equippedWeapon, equippedBody, equippedBoots, equippedRing, lootBackpack, gold, reforgeShards } = state;
   const [selectedLoot, setSelectedLoot] = useState<Equipment | null>(null);
   const [activeSlotTab, setActiveSlotTab] = useState<EquipmentSlot>('weapon');
-  const [sortBy, setSortBy] = useState<'newest' | 'level' | 'enhance' | 'rarity' | 'substats'>('newest');
+  const [sortBy, setSortBy] = useState<'newest' | 'strength' | 'level' | 'enhance' | 'rarity' | 'substats'>('newest');
   const [showScrapConfirm, setShowScrapConfirm] = useState(false);
 
   const getSortedBackpack = () => {
     const filtered = lootBackpack.filter(item => item.slot === activeSlotTab);
     return [...filtered].sort((a, b) => {
+      if (sortBy === 'strength') {
+        const valA = (a.baseValue || 0) * (1 + (a.enhanceLevel || 0) * 0.15);
+        const valB = (b.baseValue || 0) * (1 + (b.enhanceLevel || 0) * 0.15);
+        return valB - valA;
+      }
       if (sortBy === 'level') {
         return (b.itemLevel || 0) - (a.itemLevel || 0);
       }
@@ -761,20 +766,33 @@ export const GearManager: React.FC<GearManagerProps> = ({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#555', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><BagIcon size={14} /> Backpack ({activeSlotTab}s)</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              {state.prestigeUpgrades?.multiScrap === 1 && lootBackpack.filter(item => item.slot === activeSlotTab).length > 0 && (
-                <button
-                  onClick={() => setShowScrapConfirm(true)}
-                  className="game-btn scrap-all-btn"
-                  style={{
-                    fontSize: '0.55rem',
-                    fontWeight: 'bold',
-                    padding: '2px 6px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  ♻️ SCRAP ALL
-                </button>
-              )}
+              {(() => {
+                const isUnlocked = state.prestigeUpgrades?.multiScrap === 1;
+                const hasItems = lootBackpack.filter(item => item.slot === activeSlotTab).length > 0;
+                return (
+                  <button
+                    onClick={() => {
+                      if (isUnlocked && hasItems) setShowScrapConfirm(true);
+                    }}
+                    disabled={!isUnlocked || !hasItems}
+                    className={`game-btn scrap-all-btn ${!isUnlocked ? 'disabled' : ''}`}
+                    title={!isUnlocked ? 'Unlock Multi-Scrapper in Prestige Shop to mass scrap items' : 'Scrap all unlocked items in this slot'}
+                    style={{
+                      fontSize: '0.55rem',
+                      fontWeight: 'bold',
+                      padding: '2px 6px',
+                      cursor: isUnlocked && hasItems ? 'pointer' : 'not-allowed',
+                      opacity: isUnlocked && hasItems ? 1.0 : 0.45,
+                      filter: !isUnlocked ? 'grayscale(1)' : undefined,
+                      background: !isUnlocked ? (state.darkMode ? '#27272a' : '#e4e4e7') : undefined,
+                      color: !isUnlocked ? (state.darkMode ? '#a1a1aa' : '#71717a') : undefined,
+                      border: !isUnlocked ? '1.5px solid #666' : undefined
+                    }}
+                  >
+                    ♻️ SCRAP ALL {!isUnlocked ? '(LOCKED)' : ''}
+                  </button>
+                );
+              })()}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.70rem' }}>
                 <span style={{ fontWeight: 'bold', color: state.darkMode ? '#fff' : '#000' }}>SORT:</span>
               <select
@@ -791,6 +809,7 @@ export const GearManager: React.FC<GearManagerProps> = ({
                 }}
               >
                 <option value="newest">🆕 Newest</option>
+                <option value="strength">⚔️ Strength</option>
                 <option value="level">📈 Level</option>
                 <option value="enhance">➕ Enhance</option>
                 <option value="rarity">🔶 Rarity</option>
@@ -1057,26 +1076,24 @@ export const GearManager: React.FC<GearManagerProps> = ({
                   <ShieldIcon size={12} color="#000" /> EQUIP GEAR
                 </button>
 
-                {(state.prestigeUpgrades?.multiScrap === 1 || state.prestigeUpgrades?.autoScrap === 1) && (
-                  <button
-                    onClick={() => {
-                      toggleGearLock(selectedLoot.id);
-                      setSelectedLoot(prev => prev ? { ...prev, locked: !prev.locked } : null);
-                    }}
-                    className="game-btn"
-                    style={{
-                      flex: 1,
-                      padding: '0.3rem',
-                      fontSize: '0.7rem',
-                      background: selectedLoot.locked ? 'var(--neon-yellow)' : (state.darkMode ? '#444' : '#ddd'),
-                      color: selectedLoot.locked ? '#000' : (state.darkMode ? '#fff' : '#000'),
-                      fontWeight: 'bold',
-                      border: `2px solid ${state.darkMode ? '#fff' : '#000'}`
-                    }}
-                  >
-                    {selectedLoot.locked ? '🔒 LOCKED' : '🔓 LOCK GEAR'}
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    toggleGearLock(selectedLoot.id);
+                    setSelectedLoot(prev => prev ? { ...prev, locked: !prev.locked } : null);
+                  }}
+                  className="game-btn"
+                  style={{
+                    flex: 1,
+                    padding: '0.3rem',
+                    fontSize: '0.7rem',
+                    background: selectedLoot.locked ? 'var(--neon-yellow)' : (state.darkMode ? '#444' : '#ddd'),
+                    color: selectedLoot.locked ? '#000' : (state.darkMode ? '#fff' : '#000'),
+                    fontWeight: 'bold',
+                    border: `2px solid ${state.darkMode ? '#fff' : '#000'}`
+                  }}
+                >
+                  {selectedLoot.locked ? '🔒 LOCKED' : '🔓 LOCK GEAR'}
+                </button>
 
                 <button
                   onClick={() => {

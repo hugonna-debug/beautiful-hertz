@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useGameState, rollSubstatWithRarity, rollSubstatWithFixedRarity, getEnemyForStage } from '../hooks/useGameState';
+import { useGameState, rollSubstatWithRarity, rollSubstatWithFixedRarity, getEnemyForStage, generateRandomLoot } from '../hooks/useGameState';
 
 describe('Idle Stats Reforged - GameState Hook & Formulas', () => {
   beforeEach(() => {
@@ -435,5 +435,12 @@ describe('Idle Stats Reforged - GameState Hook & Formulas', () => {
 
     const batEnemy = getEnemyForStage(11, 1);
     expect(batEnemy.sprite).toBeDefined();
+  });
+
+  it('should generate items with core stat variance even for same level and rarity', () => {
+    const item1 = generateRandomLoot(10, 'weapon');
+    const item2 = generateRandomLoot(10, 'weapon');
+    expect(item1.baseValue).toBeGreaterThan(0);
+    expect(item2.baseValue).toBeGreaterThan(0);
   });
 });

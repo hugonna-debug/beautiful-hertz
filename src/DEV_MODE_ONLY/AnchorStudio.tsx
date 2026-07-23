@@ -1240,19 +1240,28 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
                 </div>
 
                 {/* SPRITE INTERACTIVE CANVAS */}
-                <div style={{ position: 'relative', width: '384px', height: '384px', backgroundColor: '#090d16', border: '2px solid #334155', borderRadius: '8px', overflow: 'hidden' }}>
-                  <img
-                    src={activeSprite.url}
-                    alt={activeSprite.name}
-                    style={{ width: '100%', height: '100%', imageRendering: 'pixelated' as const }}
-                  />
-                  <canvas
-                    ref={batchCanvasRef}
-                    width={384}
-                    height={384}
-                    onClick={handleBatchCanvasClick}
-                    style={{ position: 'absolute', top: 0, left: 0, cursor: 'crosshair' }}
-                  />
+                <div style={{ position: 'relative', width: '384px', height: '384px', backgroundColor: '#090d16', border: '2px solid #334155', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{
+                    position: 'relative',
+                    width: '384px',
+                    height: '384px',
+                    transform: `scale(${activeSprite.scale || 1.0})`,
+                    transformOrigin: activeSprite.baseAnchor ? `${(activeSprite.baseAnchor.x / 64) * 100}% ${(activeSprite.baseAnchor.y / 64) * 100}%` : 'center center',
+                    transition: 'transform 0.15s ease-out'
+                  }}>
+                    <img
+                      src={activeSprite.url}
+                      alt={activeSprite.name}
+                      style={{ width: '100%', height: '100%', imageRendering: 'pixelated' as const }}
+                    />
+                    <canvas
+                      ref={batchCanvasRef}
+                      width={384}
+                      height={384}
+                      onClick={handleBatchCanvasClick}
+                      style={{ position: 'absolute', top: 0, left: 0, cursor: 'crosshair' }}
+                    />
+                  </div>
                 </div>
 
                 {/* ACTION BUTTONS ROW */}

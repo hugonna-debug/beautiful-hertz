@@ -304,12 +304,13 @@ export const generateRandomLoot = (stage: number, slot?: EquipmentSlot, luckLeve
     }
   }
 
-  // Scale baseValue with stage and item rarity multiplier
+  // Scale baseValue with stage and item rarity multiplier, applying slight natural variance (±12%)
+  const varianceRoll = 0.88 + Math.random() * 0.24;
   let baseValue = 5;
-  if (chosenSlot === 'weapon') baseValue = Math.floor((8 + stage * 2.5) * statMultiplier);
-  else if (chosenSlot === 'body') baseValue = Math.floor((3 + stage * 1.2) * statMultiplier);
-  else if (chosenSlot === 'boots') baseValue = Math.floor((25 + stage * 15) * statMultiplier);
-  else baseValue = Number(((0.02 + stage * 0.0015) * statMultiplier).toFixed(4));
+  if (chosenSlot === 'weapon') baseValue = Math.max(1, Math.round((8 + stage * 2.5) * statMultiplier * varianceRoll));
+  else if (chosenSlot === 'body') baseValue = Math.max(1, Math.round((3 + stage * 1.2) * statMultiplier * varianceRoll));
+  else if (chosenSlot === 'boots') baseValue = Math.max(1, Math.round((25 + stage * 15) * statMultiplier * varianceRoll));
+  else baseValue = Number(((0.02 + stage * 0.0015) * statMultiplier * varianceRoll).toFixed(4));
 
   const rolledSubstats: ItemSubstat[] = [];
   const statKeys = Object.keys(SUBSTAT_RANGES) as SubstatType[];

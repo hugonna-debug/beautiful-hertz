@@ -17,7 +17,6 @@ import { WINGS_CATALOG } from '../data/wingsCatalog';
 import { TOPS_CATALOG, getCompatibleTops } from '../data/topsCatalog';
 import { CAPES_CATALOG, getCompatibleCapes } from '../data/capesCatalog';
 import { WEAPONS_CATALOG } from '../data/weaponsCatalog';
-import { WeaponAnchorEditor } from './WeaponAnchorEditor';
 import { FABRIC_PALETTES, METAL_PALETTES } from '../data/colorPalettesCatalog';
 
 const GLASSES_CATALOG = [
@@ -120,7 +119,6 @@ const SKIN_PALETTES: SkinPaletteOption[] = [
 export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ state, onUpdateCharacter }) => {
   const [studioSection, setStudioSection] = useState<'face' | 'body'>('face');
   const [activeTab, setActiveTab] = useState<'head' | 'hairstyles' | 'facial_hair' | 'side_features' | 'glasses' | 'body_base' | 'equipment' | 'tops' | 'capes' | 'weapons' | 'wings' | 'helmets' | 'accessories' | 'base' | 'features'>('head');
-  const [showAnchorEditor, setShowAnchorEditor] = useState(false);
   const [poseMode, setPoseMode] = useState<'idle_front' | 'walk_right' | 'slash_right'>('idle_front');
   const [previewFrame, setPreviewFrame] = useState<number>(0);
   const [selectedFeatureTarget, setSelectedFeatureTarget] = useState<FeatureKey>('head');
@@ -695,24 +693,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ state, onUpd
                   }}
                 >
                   Wings
-                </button>
-
-                <button
-                  onClick={() => setShowAnchorEditor(true)}
-                  style={{
-                    padding: '0.35rem 0.65rem',
-                    fontSize: '0.7rem',
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    background: 'transparent',
-                    color: state.darkMode ? '#f59e0b' : '#d97706',
-                    border: `1px solid ${state.darkMode ? '#f59e0b' : '#d97706'}`,
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  🎯 Anchor Editor
                 </button>
 
                 <button
@@ -1920,13 +1900,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ state, onUpd
         </div>
       </div>
     </div>
-    {showAnchorEditor && (
-      <WeaponAnchorEditor
-        config={currentConfig}
-        darkMode={state.darkMode}
-        onClose={() => setShowAnchorEditor(false)}
-      />
-    )}
     </>
   );
 };

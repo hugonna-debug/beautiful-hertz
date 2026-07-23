@@ -1,9 +1,11 @@
 {
-  "baseX": 15,
-  "baseY": 48,
-  "tipX": 48,
-  "tipY": 17,
-  "angle": -44.0,
-  "distance": 45.0,
-  "scale": 1.0
+  "filename": "shadow_blade_saber.png",
+  "anchoredAt": "2026-07-23T20:03:15.327Z",
+  "baseX": 12,
+  "baseY": 53,
+  "tipX": 50,
+  "tipY": 16,
+  "angle": -44.24,
+  "distance": 53.04,
+  "scale": 1
 }

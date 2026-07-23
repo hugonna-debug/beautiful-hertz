@@ -8,7 +8,7 @@ import { WINGS_CATALOG } from '../data/wingsCatalog';
 import { TOPS_CATALOG } from '../data/topsCatalog';
 import { CAPES_CATALOG } from '../data/capesCatalog';
 import { getPantsFileUrl } from '../data/pantsCatalog';
-import { getWeaponFileUrl, getWeaponAnchorData } from '../data/weaponsCatalog';
+import { getWeaponFileUrl, getWeaponAnchorData, loadAnchorSidecar } from '../data/weaponsCatalog';
 import { FABRIC_PALETTES, METAL_PALETTES } from '../data/colorPalettesCatalog';
 import { getHandSocket } from '../utils/handSockets';
 
@@ -824,9 +824,13 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
       });
     });
 
-    Promise.all(loadImages).then(results => {
+    const weaponLayer = layers.find(l => l.isWeapon);
+    const sidecarPromise = weaponLayer ? loadAnchorSidecar(weaponLayer.url) : Promise.resolve(null);
+
+    Promise.all([...loadImages, sidecarPromise]).then(results => {
       if (isCancelled) return;
-      const validImages = results.filter(Boolean) as { img: HTMLImageElement; spec: LayerSpec }[];
+      const imageResults = results.slice(0, layers.length);
+      const validImages = imageResults.filter(Boolean) as { img: HTMLImageElement; spec: LayerSpec }[];
       renderCharacterComposition(validImages);
     });
 
