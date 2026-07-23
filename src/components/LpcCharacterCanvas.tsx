@@ -559,24 +559,13 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
           const handX = (socket.x + manualOffsetX) * scaleX;
           const handY = (socket.y + manualOffsetY) * scaleY;
 
-          const nativeW = wImg.naturalWidth || 64;
-          const nativeH = wImg.naturalHeight || 64;
-          const isLpcSheet = nativeW >= 384 || nativeH >= 1344;
-
-          let drawW = offscreen.width;
-          let drawH = offscreen.height;
+          const drawW = offscreen.width;
+          const drawH = offscreen.height;
 
           const customPivotX = (equippedWeapon as any)?.pivotX ?? (equippedWeapon as any)?.baseX ?? socket.pivotX ?? 20;
           const customPivotY = (equippedWeapon as any)?.pivotY ?? (equippedWeapon as any)?.baseY ?? socket.pivotY ?? 44;
           const pX = customPivotX * scaleX;
           const pY = customPivotY * scaleY;
-
-          if (!isLpcSheet && (nativeW !== 64 || nativeH !== 64)) {
-            // Standalone weapon sprite (e.g. 256x256 unverified/anchored weapon asset)
-            // Scale proportionally to native resolution so it extends outside the player body box
-            drawW = scaleX * nativeW;
-            drawH = scaleY * nativeH;
-          }
 
           offCtx.save();
           offCtx.translate(handX, handY);
