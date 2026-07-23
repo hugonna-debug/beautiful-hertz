@@ -9,7 +9,9 @@
     "lint": "oxlint",
     "test": "vitest run",
     "preview": "vite preview",
-    "start": "node server.js"
+    "start": "node server.js",
+    "electron:start": "electron electron/main.js",
+    "electron:build": "npm run build && npm run electron:start"
   },
   "dependencies": {
     "@google-cloud/firestore": "^8.6.0",
@@ -27,6 +29,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "electron": "^43.2.0",
     "jsdom": "^29.1.1",
     "oxlint": "^1.71.0",
     "typescript": "~6.0.2",
