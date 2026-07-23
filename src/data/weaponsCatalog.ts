@@ -92,29 +92,71 @@ export function getWeaponFileUrl(weaponId: string = 'none'): string {
   return `/assets/anchored_weapons/${weaponId}.png`;
 }
 
+export async function loadAnchorSidecar(weaponIdOrUrl: string): Promise<AnchorData | null> {
+  if (!weaponIdOrUrl || weaponIdOrUrl === 'none') return null;
+  const basename = weaponIdOrUrl.split('/').pop()?.replace(/\.(png|jpg|jpeg)$/i, '') || weaponIdOrUrl;
+  const sidecarUrl = `/assets/anchored_weapons/${basename}.anchor.json`;
+
+  try {
+    const res = await fetch(sidecarUrl);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data.baseX === 'number') {
+        const anchor: AnchorData = {
+          baseX: data.baseX,
+          baseY: data.baseY,
+          tipX: data.tipX,
+          tipY: data.tipY,
+          angle: data.angle,
+          distance: data.distance,
+          scale: typeof data.scale === 'number' ? data.scale : 1.0,
+        };
+        const key = weaponIdOrUrl.toLowerCase();
+        anchorCache.set(key, anchor);
+        anchorCache.set(basename.toLowerCase(), anchor);
+
+        // Sync catalog item if present
+        const catalogItem = WEAPONS_CATALOG.find(w => w.id.toLowerCase() === basename.toLowerCase() || w.filename.toLowerCase() === `${basename.toLowerCase()}.png`);
+        if (catalogItem) {
+          catalogItem.anchor = anchor;
+        }
+
+        return anchor;
+      }
+    }
+  } catch {
+    // Ignore sidecar fetch errors
+  }
+  return null;
+}
+
 export function getWeaponAnchorData(weaponIdOrUrl: string = 'none'): AnchorData | null {
   if (!weaponIdOrUrl || weaponIdOrUrl === 'none') return null;
 
   const search = weaponIdOrUrl.toLowerCase();
   if (anchorCache.has(search)) return anchorCache.get(search)!;
 
+  const basename = weaponIdOrUrl.split('/').pop()?.replace(/\.(png|jpg|jpeg)$/i, '').toLowerCase() || '';
+  if (basename && anchorCache.has(basename)) return anchorCache.get(basename)!;
+
   // Search catalog by filename or ID or name
   const item = WEAPONS_CATALOG.find(w => 
     w.id.toLowerCase() === search || 
     w.url.toLowerCase() === search || 
     w.filename.toLowerCase() === search ||
-    w.name.toLowerCase() === search
+    w.name.toLowerCase() === search ||
+    (basename && (w.id.toLowerCase() === basename || w.filename.toLowerCase() === `${basename}.png`))
   );
 
   if (item && item.anchor) {
     anchorCache.set(search, item.anchor);
+    if (basename) anchorCache.set(basename, item.anchor);
     return item.anchor;
   }
 
-  // Extract basename if path given
-  const basename = weaponIdOrUrl.split('/').pop()?.replace(/\.(png|jpg|jpeg)$/i, '') || '';
-  if (basename && anchorCache.has(basename.toLowerCase())) {
-    return anchorCache.get(basename.toLowerCase())!;
+  // Trigger async fetch of sidecar JSON to populate cache dynamically
+  if (typeof window !== 'undefined' && window.fetch) {
+    loadAnchorSidecar(weaponIdOrUrl);
   }
 
   return null;

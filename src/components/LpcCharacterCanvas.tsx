@@ -28,6 +28,8 @@ interface LpcCharacterCanvasProps {
   studioSection?: 'face' | 'body' | 'both';
   manualOffsetX?: number;
   manualOffsetY?: number;
+  padding?: number;
+  marginRatio?: number;
   style?: React.CSSProperties;
   className?: string;
 }
@@ -347,6 +349,8 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
   studioSection = 'both',
   manualOffsetX = 0,
   manualOffsetY = 0,
+  padding,
+  marginRatio,
   style,
   className
 }) => {
@@ -406,6 +410,25 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
       if (!offCtx) return;
 
       offCtx.imageSmoothingEnabled = false;
+
+      const marginX = typeof padding === 'number'
+        ? padding
+        : typeof marginRatio === 'number'
+          ? Math.floor(offscreen.width * marginRatio)
+          : 0;
+      const marginY = typeof padding === 'number'
+        ? padding
+        : typeof marginRatio === 'number'
+          ? Math.floor(offscreen.height * marginRatio)
+          : 0;
+
+      const bodyWidth = Math.max(1, offscreen.width - marginX * 2);
+      const bodyHeight = Math.max(1, offscreen.height - marginY * 2);
+      const padX = marginX;
+      const padY = marginY;
+
+      const scaleX = bodyWidth / 64;
+      const scaleY = bodyHeight / 64;
 
       // 1. Construct Pre-Composited Unified Head Entity (Head + Ears + Horns + Beard + Mustache + Hair + Accessories)
       const unifiedHeadCanvas = document.createElement('canvas');
@@ -537,9 +560,9 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
         // Render ONLY the pre-composited unified head entity centered on canvas
         const dummyHeadSpec: LayerSpec = { url: '', isHead: true };
         const { alignOffsetX, alignOffsetY } = getPostureOffsets(action, direction, frame, dummyHeadSpec, 256);
-        const finalX = alignOffsetX + manualOffsetX;
-        const finalY = alignOffsetY + manualOffsetY;
-        offCtx.drawImage(unifiedHeadCanvas, 0, 0, 64, 64, finalX, finalY, offscreen.width, offscreen.height);
+        const finalX = padX + (alignOffsetX + manualOffsetX) * scaleX;
+        const finalY = padY + (alignOffsetY + manualOffsetY) * scaleY;
+        offCtx.drawImage(unifiedHeadCanvas, 0, 0, 64, 64, finalX, finalY, bodyWidth, bodyHeight);
       } else {
         // 2. Render Body Layers and draw Unified Head Entity as single object
         const bodyImages = validImages.filter(({ spec }) => !spec.isHead && !spec.isHair && !spec.isFacialHair && !spec.isEars && !spec.isAcc && !spec.isWeapon);
@@ -554,15 +577,13 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
           const order = socket.renderOrder || 'front';
           if (order !== targetOrder) return;
 
-          const scaleX = offscreen.width / 64;
-          const scaleY = offscreen.height / 64;
-          const handX = (socket.x + manualOffsetX) * scaleX;
-          const handY = (socket.y + manualOffsetY) * scaleY;
+          const handX = padX + (socket.x + manualOffsetX) * scaleX;
+          const handY = padY + (socket.y + manualOffsetY) * scaleY;
 
           const anchorData = getWeaponAnchorData(equippedWeapon?.sprite || equippedWeapon?.id || activeConfig.weapon || weaponEntry.spec.url);
-          const weaponScale = (equippedWeapon as any)?.scale ?? 1.0;
-          const drawW = offscreen.width * weaponScale;
-          const drawH = offscreen.height * weaponScale;
+          const weaponScale = (equippedWeapon as any)?.scale ?? (equippedWeapon as any)?.anchor?.scale ?? anchorData?.scale ?? 1.0;
+          const drawW = bodyWidth * weaponScale;
+          const drawH = bodyHeight * weaponScale;
 
           const customPivotX = anchorData?.baseX ?? (equippedWeapon as any)?.pivotX ?? (equippedWeapon as any)?.baseX ?? socket.pivotX ?? 20;
           const customPivotY = anchorData?.baseY ?? (equippedWeapon as any)?.pivotY ?? (equippedWeapon as any)?.baseY ?? socket.pivotY ?? 44;
@@ -661,7 +682,7 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
                   wingCtx.fillRect(0, 0, 64, 64);
                   wingCtx.globalCompositeOperation = 'destination-in';
                   wingCtx.drawImage(loadedImg, offsetX, srcY, 64, 64, 0, 0, 64, 64);
-                  offCtx.drawImage(wingCanvas, bodyDrawX, bodyDrawY, offscreen.width, offscreen.height);
+                  offCtx.drawImage(wingCanvas, padX + bodyDrawX * scaleX, padY + bodyDrawY * scaleY, bodyWidth, bodyHeight);
                 }
               } else if (spec.isCape) {
                 const capeCanvas = document.createElement('canvas');
@@ -680,7 +701,7 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
                   capeCtx.fillRect(0, 0, 64, 64);
                   capeCtx.globalCompositeOperation = 'destination-in';
                   capeCtx.drawImage(loadedImg, offsetX, srcY, 64, 64, 0, 0, 64, 64);
-                  offCtx.drawImage(capeCanvas, bodyDrawX, bodyDrawY, offscreen.width, offscreen.height);
+                  offCtx.drawImage(capeCanvas, padX + bodyDrawX * scaleX, padY + bodyDrawY * scaleY, bodyWidth, bodyHeight);
                 }
               } else if (spec.isTop) {
                 const topCanvas = document.createElement('canvas');
@@ -699,7 +720,7 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
                   topCtx.fillRect(0, 0, 64, 64);
                   topCtx.globalCompositeOperation = 'destination-in';
                   topCtx.drawImage(loadedImg, offsetX, srcY, 64, 64, 0, 0, 64, 64);
-                  offCtx.drawImage(topCanvas, bodyDrawX, bodyDrawY, offscreen.width, offscreen.height);
+                  offCtx.drawImage(topCanvas, padX + bodyDrawX * scaleX, padY + bodyDrawY * scaleY, bodyWidth, bodyHeight);
                 }
               } else if (spec.isLegs) {
                 const legsCanvas = document.createElement('canvas');
@@ -715,10 +736,10 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
                   legsCtx.fillRect(0, 0, 64, 64);
                   legsCtx.globalCompositeOperation = 'destination-in';
                   legsCtx.drawImage(loadedImg, offsetX, srcY, 64, 64, 0, 0, 64, 64);
-                  offCtx.drawImage(legsCanvas, bodyDrawX, bodyDrawY, offscreen.width, offscreen.height);
+                  offCtx.drawImage(legsCanvas, padX + bodyDrawX * scaleX, padY + bodyDrawY * scaleY, bodyWidth, bodyHeight);
                 }
               } else {
-                offCtx.drawImage(loadedImg, offsetX, srcY, 64, 64, bodyDrawX, bodyDrawY, offscreen.width, offscreen.height);
+                offCtx.drawImage(loadedImg, offsetX, srcY, 64, 64, padX + bodyDrawX * scaleX, padY + bodyDrawY * scaleY, bodyWidth, bodyHeight);
               }
 
               // Draw Unified Head Entity on top of base body (or legs)
@@ -726,9 +747,9 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
                 headDrawn = true;
                 const dummyHeadSpec: LayerSpec = { url: '', isHead: true };
                 const { alignOffsetX, alignOffsetY } = getPostureOffsets(action, direction, frame, dummyHeadSpec, 256);
-                const finalX = alignOffsetX + manualOffsetX;
-                const finalY = alignOffsetY + manualOffsetY;
-                offCtx.drawImage(unifiedHeadCanvas, 0, 0, 64, 64, finalX, finalY, offscreen.width, offscreen.height);
+                const finalX = padX + (alignOffsetX + manualOffsetX) * scaleX;
+                const finalY = padY + (alignOffsetY + manualOffsetY) * scaleY;
+                offCtx.drawImage(unifiedHeadCanvas, 0, 0, 64, 64, finalX, finalY, bodyWidth, bodyHeight);
               }
             } catch (err) {
               // Ignore layer render error
@@ -739,9 +760,9 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
         if (!headDrawn) {
           const dummyHeadSpec: LayerSpec = { url: '', isHead: true };
           const { alignOffsetX, alignOffsetY } = getPostureOffsets(action, direction, frame, dummyHeadSpec, 256);
-          const finalX = alignOffsetX + manualOffsetX;
-          const finalY = alignOffsetY + manualOffsetY;
-          offCtx.drawImage(unifiedHeadCanvas, 0, 0, 64, 64, finalX, finalY, offscreen.width, offscreen.height);
+          const finalX = padX + (alignOffsetX + manualOffsetX) * scaleX;
+          const finalY = padY + (alignOffsetY + manualOffsetY) * scaleY;
+          offCtx.drawImage(unifiedHeadCanvas, 0, 0, 64, 64, finalX, finalY, bodyWidth, bodyHeight);
         }
 
         // Draw weapon in front of character if socket specifies 'front'

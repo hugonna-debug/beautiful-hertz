@@ -1308,8 +1308,8 @@ export const BattleConsole: React.FC<BattleConsoleProps> = ({
               key={`player-anim-${attackTriggerId}`}
               style={{
                 position: 'relative',
-                width: '140px',
-                height: '140px',
+                width: '260px',
+                height: '210px',
                 overflow: 'visible',
                 animation: playerAttacking 
                   ? `playerLungeAttack ${Number((0.60 / Math.max(0.5, heroStats.atkSpeed || 1.0)).toFixed(3))}s cubic-bezier(0.25, 0.8, 0.25, 1.2)` 
@@ -1327,8 +1327,9 @@ export const BattleConsole: React.FC<BattleConsoleProps> = ({
                 hideWeapon={false}
                 hideArmor={false}
                 action="slash"
-                width={120}
-                height={120}
+                width={260}
+                height={210}
+                marginRatio={0.18}
                 direction="east"
                 frame={[1, 2, 3, 4, 5, 4, 3, 2][spriteFrame % 8]}
                 style={{ overflow: 'visible' }}
