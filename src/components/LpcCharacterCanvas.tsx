@@ -585,8 +585,8 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
           const drawW = bodyWidth * weaponScale;
           const drawH = bodyHeight * weaponScale;
 
-          const customPivotX = anchorData?.baseX ?? (equippedWeapon as any)?.pivotX ?? (equippedWeapon as any)?.baseX ?? socket.pivotX ?? 20;
-          const customPivotY = anchorData?.baseY ?? (equippedWeapon as any)?.pivotY ?? (equippedWeapon as any)?.baseY ?? socket.pivotY ?? 44;
+          const customPivotX = (equippedWeapon as any)?.baseX ?? (equippedWeapon as any)?.pivotX ?? (equippedWeapon as any)?.anchor?.baseX ?? anchorData?.baseX ?? socket.pivotX ?? 20;
+          const customPivotY = (equippedWeapon as any)?.baseY ?? (equippedWeapon as any)?.pivotY ?? (equippedWeapon as any)?.anchor?.baseY ?? anchorData?.baseY ?? socket.pivotY ?? 44;
           const pX = customPivotX * scaleX * weaponScale;
           const pY = customPivotY * scaleY * weaponScale;
 

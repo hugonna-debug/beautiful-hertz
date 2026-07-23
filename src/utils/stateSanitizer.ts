@@ -1,4 +1,5 @@
 import { GameState, Equipment, ItemSubstat, TalentNode, SubstatType } from '../types/game';
+import { WEAPONS_CATALOG, getWeaponFileUrl } from '../data/weaponsCatalog';
 
 export const DEFAULT_TALENT_NODES: TalentNode[] = [
   // Obliteration (Offensive Tree)
@@ -94,9 +95,36 @@ export function migrateItem(item: any): Equipment | null {
     }
   }
 
+  let name = item.name || 'Unknown Relic';
+  let sprite: string | undefined = typeof item.sprite === 'string' ? item.sprite : undefined;
+
+  if (slot === 'weapon') {
+    const validWeapons = WEAPONS_CATALOG.filter(w => w.id !== 'none');
+    const search = name.toLowerCase().replace(/\[.*?\]/g, '').trim();
+    const matched = validWeapons.find(w => 
+      w.name.toLowerCase() === search ||
+      w.id.toLowerCase() === search ||
+      w.url.toLowerCase() === sprite?.toLowerCase() ||
+      search.includes(w.name.toLowerCase()) ||
+      search.includes(w.id.toLowerCase())
+    );
+
+    if (matched) {
+      name = matched.name;
+      sprite = matched.url;
+    } else if (validWeapons.length > 0) {
+      // Deterministic hash to map unmapped legacy item names (e.g. Huntsman Spear, Dual Claw, Royal Greatsword) to anchored weapons
+      const hashStr = item.id || name;
+      const hash = Math.abs(hashStr.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0));
+      const fallback = validWeapons[hash % validWeapons.length];
+      name = fallback.name;
+      sprite = fallback.url;
+    }
+  }
+
   return {
     id: item.id || `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    name: item.name || 'Unknown Relic',
+    name,
     slot,
     itemLevel,
     enhanceLevel,
@@ -106,7 +134,7 @@ export function migrateItem(item: any): Equipment | null {
     rarity,
     acquiredAt,
     locked: Boolean(item.locked),
-    sprite: typeof item.sprite === 'string' ? item.sprite : undefined
+    sprite
   };
 }
 

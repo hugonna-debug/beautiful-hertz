@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameState } from '../types/game';
 import { LpcCharacterCanvas } from '../components/LpcCharacterCanvas';
+import { registerWeapon } from '../data/weaponsCatalog';
 import {
   Vector2D,
   AnchorPointSpec,
@@ -574,6 +575,21 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
         angle: sprite.angle || 0,
         distance: sprite.distance || 0,
         scale: sprite.scale || 1.0,
+      });
+      registerWeapon({
+        id: filename.replace(/\.(png|jpg|jpeg|gif|webp|bmp)$/i, ''),
+        name: filename.replace(/\.(png|jpg|jpeg|gif|webp|bmp)$/i, '').replace(/[_-]/g, ' '),
+        url: `/assets/anchored_weapons/${filename}`,
+        filename,
+        anchor: {
+          baseX: sprite.baseAnchor.x,
+          baseY: sprite.baseAnchor.y,
+          tipX: sprite.tipAnchor.x,
+          tipY: sprite.tipAnchor.y,
+          angle: sprite.angle || 0,
+          distance: sprite.distance || 0,
+          scale: sprite.scale || 1.0,
+        }
       });
       setPipelineMessage(`✅ ${result.message}`);
       // Remove from local list and stay at same index (shows next weapon)
