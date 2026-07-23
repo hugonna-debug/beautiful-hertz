@@ -54,6 +54,13 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
   const [batchCategoryFilter, setBatchCategoryFilter] = useState<string>('all');
   const [batchClickStep, setBatchClickStep] = useState<'base' | 'tip'>('base');
 
+  // Player Animation Preview Modal State
+  const [previewModalWeapon, setPreviewModalWeapon] = useState<SpriteBatchItem | null>(null);
+  const [modalFrameIndex, setModalFrameIndex] = useState<number>(0);
+  const [isModalPlaying, setIsModalPlaying] = useState<boolean>(true);
+  const [modalDirection, setModalDirection] = useState<'east' | 'south' | 'west' | 'north'>('east');
+  const [modalSpeed, setModalSpeed] = useState<number>(120);
+
   // Pipeline State
   const [pipelineStats, setPipelineStats] = useState<WeaponPipelineStats>({ unverified: 0, anchored: 0, skipped: 0, total: 0 });
   const [pipelineLoading, setPipelineLoading] = useState(false);
@@ -155,6 +162,17 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
     }, playbackSpeed);
     return () => clearInterval(timer);
   }, [isPlaying, playbackSpeed]);
+
+  // Playback Loop for Modal & Live Player Character Preview
+  useEffect(() => {
+    if (!isModalPlaying) return;
+    let seqIdx = 0;
+    const timer = setInterval(() => {
+      setModalFrameIndex(ARENA_FRAMES[seqIdx % ARENA_FRAMES.length]);
+      seqIdx++;
+    }, modalSpeed);
+    return () => clearInterval(timer);
+  }, [isModalPlaying, modalSpeed]);
 
   // Keydown Listener for Mode 2 Rapid Marking ([ENTER] to confirm & next)
   useEffect(() => {
@@ -1291,14 +1309,75 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
                   </div>
                 </div>
 
-                <div style={{ backgroundColor: '#0c1222', padding: '0.8rem', borderRadius: '6px', border: '1px solid #1e293b' }}>
-                  <h4 style={{ margin: '0 0 0.4rem 0', fontSize: '0.8rem', color: '#f59e0b' }}>🔄 Workflow</h4>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.6 }}>
-                    <div>1. Click grip point (green)</div>
-                    <div>2. Click weapon tip (blue)</div>
-                    <div>3. Hit <b style={{ color: '#10b981' }}>ANCHOR & SAVE</b></div>
-                    <div style={{ marginTop: '0.3rem', color: '#64748b' }}>• Sprite moves to <b>anchored_weapons/</b></div>
-                    <div style={{ color: '#64748b' }}>• Skip moves to <b>skipped_weapons/</b></div>
+                {/* LIVE CHARACTER ANIMATION PREVIEW CARD */}
+                <div style={{ backgroundColor: '#0f172a', padding: '1rem', borderRadius: '8px', border: '1px solid #06b6d4', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#38bdf8', fontWeight: 800 }}>
+                      🎬 Live Player Preview
+                    </h4>
+                    <button
+                      onClick={() => setPreviewModalWeapon(activeSprite)}
+                      style={{
+                        padding: '0.25rem 0.6rem',
+                        backgroundColor: '#0284c7',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      🔍 Fullscreen
+                    </button>
+                  </div>
+
+                  <div style={{ width: '100%', height: '180px', backgroundColor: '#090d16', borderRadius: '6px', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <LpcCharacterCanvas
+                      config={state.lpcCharacter}
+                      equippedWeapon={{
+                        id: activeSprite.id,
+                        name: activeSprite.name,
+                        slot: 'weapon',
+                        sprite: activeSprite.url,
+                        baseX: activeSprite.baseAnchor?.x,
+                        baseY: activeSprite.baseAnchor?.y,
+                      } as any}
+                      action="slash"
+                      direction={modalDirection}
+                      frame={modalFrameIndex}
+                      width={180}
+                      height={180}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.6rem', alignItems: 'center' }}>
+                    <button
+                      onClick={() => setIsModalPlaying(!isModalPlaying)}
+                      style={{ flex: 1, padding: '0.4rem', backgroundColor: isModalPlaying ? '#ef4444' : '#10b981', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      {isModalPlaying ? '⏸️ Pause' : '▶️ Play'}
+                    </button>
+                    <div style={{ display: 'flex', gap: '0.2rem' }}>
+                      {(['east', 'south', 'west', 'north'] as const).map(d => (
+                        <button
+                          key={d}
+                          onClick={() => setModalDirection(d)}
+                          style={{
+                            padding: '0.3rem 0.4rem',
+                            backgroundColor: modalDirection === d ? '#06b6d4' : '#1e293b',
+                            color: modalDirection === d ? '#090d16' : '#94a3b8',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {d[0].toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1307,7 +1386,7 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
 
           {/* VIEW MODE A: GRID PREVIEW MODE */}
           {batchViewMode === 'grid' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.6rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.8rem' }}>
               {filteredBatchSprites.map((item, idx) => (
                 <div
                   key={`${item.id}_${idx}`}
@@ -1315,21 +1394,310 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
                   style={{
                     backgroundColor: '#121827',
                     border: activeBatchIndex === idx ? '2px solid #06b6d4' : '1px solid #1f293d',
-                    borderRadius: '6px',
-                    padding: '0.5rem',
+                    borderRadius: '8px',
+                    padding: '0.8rem',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     cursor: 'pointer',
-                    position: 'relative'
+                    position: 'relative',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                   }}
                 >
-                  <img src={item.url} alt={item.name} style={{ width: '64px', height: '64px', imageRendering: 'pixelated' as const, marginBottom: '0.3rem' }} />
-                  <span style={{ fontSize: '0.6rem', fontWeight: 600, color: '#94a3b8', textAlign: 'center', wordBreak: 'break-all', lineHeight: 1.2 }}>{item.id}</span>
+                  {/* ANCHORED BADGE */}
+                  {item.isMarked && (
+                    <span style={{ position: 'absolute', top: 6, right: 6, fontSize: '0.75rem', backgroundColor: '#052e16', color: '#10b981', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid #10b981', fontWeight: 800 }}>
+                      ✓ ANCHORED
+                    </span>
+                  )}
+
+                  <img src={item.url} alt={item.name} style={{ width: '80px', height: '80px', imageRendering: 'pixelated' as const, marginBottom: '0.5rem' }} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#e2e8f0', textAlign: 'center', wordBreak: 'break-all', marginBottom: '0.6rem' }}>{item.id}</span>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewModalWeapon(item);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.4rem',
+                      backgroundColor: '#0284c7',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.3rem',
+                      boxShadow: '0 2px 8px rgba(2,132,199,0.3)'
+                    }}
+                  >
+                    🎬 PREVIEW ON PLAYER
+                  </button>
                 </div>
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* FULLSCREEN PLAYER ANIMATION PREVIEW MODAL */}
+      {/* ========================================================================= */}
+      {previewModalWeapon && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(9, 13, 22, 0.92)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem'
+          }}
+          onClick={() => setPreviewModalWeapon(null)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              backgroundColor: '#121827',
+              border: '2px solid #06b6d4',
+              borderRadius: '16px',
+              boxShadow: '0 0 40px rgba(6, 182, 212, 0.3)',
+              width: '900px',
+              maxWidth: '95vw',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem'
+            }}
+          >
+            {/* MODAL HEADER */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1f293d', paddingBottom: '1rem' }}>
+              <div>
+                <h2 style={{ margin: 0, color: '#38bdf8', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  🎬 Player Animation Viewer — {previewModalWeapon.name}
+                </h2>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                  File: <code style={{ color: '#10b981' }}>{previewModalWeapon.url.split('/').pop()}</code>
+                </span>
+              </div>
+              <button
+                onClick={() => setPreviewModalWeapon(null)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#1e293b',
+                  color: '#fff',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                ❌ Close Preview
+              </button>
+            </div>
+
+            {/* MODAL BODY (TWO COLUMNS) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '384px 1fr', gap: '2rem', alignItems: 'start' }}>
+              
+              {/* LEFT COLUMN: LIVE PLAYER CHARACTER CANVAS */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: '#090d16', padding: '1rem', borderRadius: '12px', border: '1px solid #1e293b' }}>
+                <div style={{ position: 'relative', width: '384px', height: '384px', backgroundColor: '#050811', borderRadius: '8px', border: '1px solid #334155', overflow: 'hidden' }}>
+                  <LpcCharacterCanvas
+                    config={state.lpcCharacter}
+                    equippedWeapon={{
+                      id: previewModalWeapon.id,
+                      name: previewModalWeapon.name,
+                      slot: 'weapon',
+                      sprite: previewModalWeapon.url,
+                      baseX: previewModalWeapon.baseAnchor?.x,
+                      baseY: previewModalWeapon.baseAnchor?.y,
+                    } as any}
+                    action="slash"
+                    direction={modalDirection}
+                    frame={modalFrameIndex}
+                    width={384}
+                    height={384}
+                  />
+                </div>
+
+                {/* PLAYBACK CONTROLS */}
+                <div style={{ width: '100%', marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => setIsModalPlaying(!isModalPlaying)}
+                      style={{
+                        flex: 2,
+                        padding: '0.6rem',
+                        backgroundColor: isModalPlaying ? '#ef4444' : '#10b981',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontWeight: 900,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {isModalPlaying ? '⏸️ PAUSE' : '▶️ PLAY LOOP'}
+                    </button>
+                    <button
+                      onClick={() => { setIsModalPlaying(false); setModalFrameIndex(f => (f + 1) % 6); }}
+                      style={{
+                        flex: 1,
+                        padding: '0.6rem',
+                        backgroundColor: '#0f172a',
+                        color: '#38bdf8',
+                        border: '1px solid #334155',
+                        borderRadius: '6px',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      STEP ▶
+                    </button>
+                  </div>
+
+                  {/* DIRECTION SELECTOR */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.3rem', fontWeight: 700 }}>
+                      Facing Direction:
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.3rem' }}>
+                      {(['east', 'south', 'west', 'north'] as const).map(dir => (
+                        <button
+                          key={dir}
+                          onClick={() => setModalDirection(dir)}
+                          style={{
+                            padding: '0.4rem',
+                            borderRadius: '4px',
+                            border: modalDirection === dir ? '2px solid #06b6d4' : '1px solid #334155',
+                            backgroundColor: modalDirection === dir ? '#0284c7' : '#0f172a',
+                            color: modalDirection === dir ? '#fff' : '#94a3b8',
+                            fontWeight: 800,
+                            fontSize: '0.75rem',
+                            textTransform: 'uppercase',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {dir === 'east' ? 'East ⚔️' : dir}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* SPEED SLIDER */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.2rem' }}>
+                      <span>Playback Speed:</span>
+                      <b style={{ color: '#06b6d4' }}>{modalSpeed}ms / frame</b>
+                    </div>
+                    <input
+                      type="range"
+                      min={40}
+                      max={300}
+                      step={10}
+                      value={modalSpeed}
+                      onChange={e => setModalSpeed(Number(e.target.value))}
+                      style={{ width: '100%', accentColor: '#06b6d4' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: WEAPON TELEMETRY & WEAPON NAVIGATOR */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', height: '100%' }}>
+                
+                {/* WEAPON ANCHOR TELEMETRY CARD */}
+                <div style={{ backgroundColor: '#0f172a', padding: '1.2rem', borderRadius: '10px', border: '1px solid #1e293b' }}>
+                  <h3 style={{ margin: '0 0 0.8rem 0', color: '#10b981', fontSize: '1.1rem' }}>
+                    📊 Applied Anchor Vector
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', fontSize: '0.9rem' }}>
+                    <div style={{ backgroundColor: '#121827', padding: '0.8rem', borderRadius: '6px', border: '1px solid #1f293d' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block' }}>Grip Handle X:</span>
+                      <b style={{ color: '#10b981', fontSize: '1.2rem' }}>{previewModalWeapon.baseAnchor?.x ?? '--'} px</b>
+                    </div>
+                    <div style={{ backgroundColor: '#121827', padding: '0.8rem', borderRadius: '6px', border: '1px solid #1f293d' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block' }}>Grip Handle Y:</span>
+                      <b style={{ color: '#10b981', fontSize: '1.2rem' }}>{previewModalWeapon.baseAnchor?.y ?? '--'} px</b>
+                    </div>
+                    <div style={{ backgroundColor: '#121827', padding: '0.8rem', borderRadius: '6px', border: '1px solid #1f293d' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block' }}>Orientation Angle:</span>
+                      <b style={{ color: '#38bdf8', fontSize: '1.2rem' }}>{previewModalWeapon.angle ?? '--'}°</b>
+                    </div>
+                    <div style={{ backgroundColor: '#121827', padding: '0.8rem', borderRadius: '6px', border: '1px solid #1f293d' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block' }}>Vector Distance:</span>
+                      <b style={{ color: '#38bdf8', fontSize: '1.2rem' }}>{previewModalWeapon.distance ?? '--'} px</b>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CYCLE THROUGH WEAPONS */}
+                <div style={{ backgroundColor: '#0f172a', padding: '1.2rem', borderRadius: '10px', border: '1px solid #1e293b' }}>
+                  <h4 style={{ margin: '0 0 0.8rem 0', color: '#38bdf8' }}>🔄 Cycle Anchored Weapons</h4>
+                  <div style={{ display: 'flex', gap: '0.8rem' }}>
+                    <button
+                      onClick={() => {
+                        const idx = batchSprites.findIndex(s => s.id === previewModalWeapon.id);
+                        if (idx > 0) setPreviewModalWeapon(batchSprites[idx - 1]);
+                      }}
+                      disabled={batchSprites.findIndex(s => s.id === previewModalWeapon.id) <= 0}
+                      style={{ flex: 1, padding: '0.8rem', backgroundColor: '#1e293b', color: '#fff', border: '1px solid #334155', borderRadius: '6px', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      ◀ PREVIOUS WEAPON
+                    </button>
+                    <button
+                      onClick={() => {
+                        const idx = batchSprites.findIndex(s => s.id === previewModalWeapon.id);
+                        if (idx < batchSprites.length - 1) setPreviewModalWeapon(batchSprites[idx + 1]);
+                      }}
+                      disabled={batchSprites.findIndex(s => s.id === previewModalWeapon.id) >= batchSprites.length - 1}
+                      style={{ flex: 1, padding: '0.8rem', backgroundColor: '#1e293b', color: '#fff', border: '1px solid #334155', borderRadius: '6px', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      NEXT WEAPON ▶
+                    </button>
+                  </div>
+                </div>
+
+                {/* ACTION BUTTONS */}
+                <div style={{ display: 'flex', gap: '0.8rem', marginTop: 'auto' }}>
+                  <button
+                    onClick={() => {
+                      const idx = batchSprites.findIndex(s => s.id === previewModalWeapon.id);
+                      if (idx !== -1) setActiveBatchIndex(idx);
+                      setBatchViewMode('rapid');
+                      setPreviewModalWeapon(null);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '0.9rem',
+                      backgroundColor: '#06b6d4',
+                      color: '#090d16',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: 900,
+                      cursor: 'pointer',
+                      fontSize: '0.95rem'
+                    }}
+                  >
+                    ✏️ EDIT ANCHORS IN STUDIO
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

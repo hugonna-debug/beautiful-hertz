@@ -559,8 +559,10 @@ export const LpcCharacterCanvas: React.FC<LpcCharacterCanvasProps> = ({
           const handX = (socket.x + manualOffsetX) * scaleX;
           const handY = (socket.y + manualOffsetY) * scaleY;
 
-          const pX = (socket.pivotX ?? 20) * scaleX;
-          const pY = (socket.pivotY ?? 44) * scaleY;
+          const customPivotX = (equippedWeapon as any)?.pivotX ?? (equippedWeapon as any)?.baseX ?? socket.pivotX ?? 20;
+          const customPivotY = (equippedWeapon as any)?.pivotY ?? (equippedWeapon as any)?.baseY ?? socket.pivotY ?? 44;
+          const pX = customPivotX * scaleX;
+          const pY = customPivotY * scaleY;
 
           offCtx.save();
           offCtx.translate(handX, handY);
