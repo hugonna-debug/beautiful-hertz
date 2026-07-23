@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/app-icon-192.png" />
+    <link rel="apple-touch-icon" href="/app-icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#080313" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>MIN-MAXXED</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Automatic Service Worker handling: Bypass on localhost to prevent stale cache white screens
+      if ('serviceWorker' in navigator) {
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        if (isLocalhost) {
+          // Unregister any stale dev service workers and clear cache on localhost
+          navigator.serviceWorker.getRegistrations().then(registrations => {
+            for (let reg of registrations) {
+              reg.unregister();
+              console.log('Unregistered Service Worker on localhost');
+            }
+          });
+          if (window.caches) {
+            caches.keys().then(names => {
+              for (let name of names) caches.delete(name);
+            });
+          }
+        } else {
+          // Register Service Worker in production mode with auto-reload on update
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+              .then(reg => {
+                console.log('Service Worker registered:', reg.scope);
+                reg.update();
+                reg.onupdatefound = () => {
+                  const installingWorker = reg.installing;
+                  if (installingWorker) {
+                    installingWorker.onstatechange = () => {
+                      if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        console.log('New live update detected! Reloading for fresh assets...');
+                        window.location.reload();
+                      }
+                    };
+                  }
+                };
+              })
+              .catch(err => console.error('Service Worker registration failed:', err));
+          });
+        }
+      }
+
+      // Auto-recover from stale script loading errors
+      window.addEventListener('error', (event) => {
+        const isScriptError = event.target && (event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK');
+        if (isScriptError) {
+          console.warn('Script loading failure detected. Purging service worker caches...');
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+              for (let reg of registrations) reg.unregister();
+              if (window.caches) {
+                caches.keys().then(names => {
+                  for (let name of names) caches.delete(name);
+                  window.location.reload();
+                });
+              }
+            });
+          }
+        }
+      }, true);
+    </script>
+  </body>
+</html>

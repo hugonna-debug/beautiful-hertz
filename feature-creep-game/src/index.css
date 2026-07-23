@@ -1,0 +1,514 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&family=VT323&family=Outfit:wght@300;400;600;700;800&display=swap');
+
+/* ==========================================================================
+   CSS CUSTOM VARIABLES & RESET
+   ========================================================================== */
+:root {
+  --gravity-y: 0px;
+  --chaos-rotation: 0deg;
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background-color: #0c0c0c;
+  color: #f3f4f6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background-color 0.8s ease, color 0.5s ease;
+  min-height: 100vh;
+}
+
+/* Base interactive elements cursor pointer */
+button, select, input {
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   GLOBAL UTILITIES & CRT EFFECTS
+   ========================================================================== */
+.crt-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.crt-effect::after {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 9999;
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+}
+
+.scanline-flicker {
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.98; }
+  50% { opacity: 1; }
+  100% { opacity: 0.99; }
+}
+
+.glitch-text {
+  position: relative;
+  animation: glitch 1s linear infinite;
+}
+
+@keyframes glitch {
+  2%, 64% { transform: translate(2px,0) skew(0deg); }
+  4%, 60% { transform: translate(-2px,0) skew(0deg); }
+  62% { transform: translate(0,0) skew(5deg); }
+}
+
+/* Gravity application container */
+.gravity-item {
+  transform: translateY(var(--gravity-y)) rotate(var(--chaos-rotation));
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Shake/Chaos animation */
+.chaos-shaker {
+  animation: shake 0.5s infinite alternate;
+}
+
+@keyframes shake {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(0px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(2px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(2px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+/* Floating click text */
+.floating-num {
+  position: absolute;
+  font-weight: bold;
+  pointer-events: none;
+  animation: floatUp 0.8s ease-out forwards;
+  z-index: 1000;
+  text-shadow: 0 0 4px currentColor;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-80px) scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* Wandering Bug styling */
+.bug-container {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  z-index: 10000;
+  cursor: pointer;
+  filter: drop-shadow(0 0 8px #ef4444);
+  transition: transform 0.1s linear;
+  animation: bugWiggle 0.2s infinite alternate;
+}
+
+@keyframes bugWiggle {
+  0% { transform: scale(1) rotate(-5deg); }
+  100% { transform: scale(1.1) rotate(5deg); }
+}
+
+/* ==========================================================================
+   THEME 0: RETRO TERMINAL
+   ========================================================================== */
+.theme-terminal {
+  background-color: #050505;
+  color: #33ff33;
+  font-family: 'Share Tech Mono', 'Courier New', Courier, monospace;
+}
+
+.theme-terminal .terminal-panel {
+  border: 1px solid #33ff33;
+  background-color: #000;
+  padding: 1.5rem;
+  box-shadow: 0 0 10px rgba(51, 255, 51, 0.2);
+}
+
+.theme-terminal button {
+  background: #000;
+  border: 1px solid #33ff33;
+  color: #33ff33;
+  padding: 0.5rem 1.5rem;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.theme-terminal button:hover {
+  background: #33ff33;
+  color: #000;
+  box-shadow: 0 0 10px #33ff33;
+}
+
+.theme-terminal button:disabled {
+  border-color: #115511;
+  color: #115511;
+  background: transparent;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.theme-terminal input, .theme-terminal select {
+  background: #000;
+  border: 1px solid #33ff33;
+  color: #33ff33;
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   THEME 1: 8-BIT ARCADE
+   ========================================================================== */
+.theme-arcade {
+  background-color: #1a0b2e;
+  background-image: radial-gradient(circle, #30175b 10%, transparent 11%), radial-gradient(circle, #30175b 10%, transparent 11%);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+  color: #ffff00;
+  font-family: 'Press Start 2P', Courier, monospace;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.theme-arcade .terminal-panel,
+.theme-arcade .tab-container,
+.theme-arcade .card {
+  background-color: #0d041e;
+  border: 4px solid #00ffff;
+  padding: 1.5rem;
+  box-shadow: 4px 4px 0px #ff00ff;
+  border-radius: 0;
+}
+
+.theme-arcade button {
+  background-color: #ff00ff;
+  color: #fff;
+  border: 4px solid #ffff00;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 10px;
+  box-shadow: 2px 2px 0px #000;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0px #000;
+}
+
+.theme-arcade button:hover {
+  background-color: #ffff00;
+  color: #000;
+  border-color: #ff00ff;
+  box-shadow: 1px 1px 0px #000;
+  transform: translate(1px, 1px);
+}
+
+.theme-arcade button:disabled {
+  background-color: #555;
+  color: #888;
+  border-color: #333;
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.theme-arcade input, .theme-arcade select {
+  background: #000;
+  border: 3px solid #ff00ff;
+  color: #00ffff;
+  padding: 4px;
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   THEME 2: NEON VAPORWAVE
+   ========================================================================== */
+.theme-vaporwave {
+  background: linear-gradient(180deg, #1f0b37 0%, #0d0418 100%);
+  color: #ff71ce;
+  font-family: 'Share Tech Mono', sans-serif;
+  font-size: 16px;
+}
+
+/* Vaporwave Sun graphic placeholder / Grid */
+.theme-vaporwave::before {
+  content: "";
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 40vh;
+  background: 
+    linear-gradient(rgba(0,0,0,0) 0%, rgba(13,4,24,0.9) 80%),
+    perspective(200px) rotateX(60deg) 
+    linear-gradient(90deg, rgba(255, 113, 206, 0.15) 1px, transparent 1px),
+    perspective(200px) rotateX(60deg) 
+    linear-gradient(rgba(255, 113, 206, 0.15) 1px, transparent 1px);
+  background-size: 100% 100%, 40px 40px, 40px 40px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.theme-vaporwave .terminal-panel,
+.theme-vaporwave .tab-container,
+.theme-vaporwave .card {
+  background-color: rgba(26, 12, 47, 0.85);
+  border: 2px solid #05ffa1;
+  box-shadow: 0 0 15px rgba(255, 113, 206, 0.4), inset 0 0 10px rgba(1, 205, 254, 0.2);
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.theme-vaporwave button {
+  background: linear-gradient(90deg, #ff71ce, #b967ff);
+  color: #fff;
+  border: 2px solid #01cdfe;
+  border-radius: 4px;
+  padding: 0.6rem 1.4rem;
+  font-family: inherit;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 10px rgba(255, 113, 206, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  transition: all 0.3s ease;
+}
+
+.theme-vaporwave button:hover {
+  background: linear-gradient(90deg, #01cdfe, #05ffa1);
+  color: #1f0b37;
+  border-color: #ff71ce;
+  box-shadow: 0 0 15px #05ffa1;
+}
+
+.theme-vaporwave button:disabled {
+  background: #331e42;
+  color: #725087;
+  border-color: #241430;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.theme-vaporwave input, .theme-vaporwave select {
+  background: #120626;
+  border: 1px solid #ff71ce;
+  color: #05ffa1;
+  padding: 6px;
+  font-family: inherit;
+  box-shadow: 0 0 8px rgba(255, 113, 206, 0.2);
+}
+
+/* ==========================================================================
+   THEME 3: GLASSMORPHIC NEON (MODERN TIER)
+   ========================================================================== */
+.theme-glassmorphic {
+  background: radial-gradient(ellipse at top, #1e1b4b, #090514);
+  color: #e2e8f0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+}
+
+.theme-glassmorphic .terminal-panel,
+.theme-glassmorphic .tab-container,
+.theme-glassmorphic .card {
+  background: rgba(25, 20, 45, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 
+              0 0 20px rgba(139, 92, 246, 0.15);
+  padding: 1.5rem;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+}
+
+.theme-glassmorphic .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), 
+              0 0 25px rgba(139, 92, 246, 0.25);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.theme-glassmorphic button {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.8) 0%, rgba(139, 92, 246, 0.8) 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 0.7rem 1.6rem;
+  font-family: inherit;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  transition: all 0.25s ease;
+}
+
+.theme-glassmorphic button:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5), 
+              0 0 15px rgba(139, 92, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.theme-glassmorphic button:disabled {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.theme-glassmorphic input, .theme-glassmorphic select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  padding: 8px 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.theme-glassmorphic input:focus, .theme-glassmorphic select:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+}
+
+/* ==========================================================================
+   COMMON COMPONENT STYLINGS (TAB VIEWS, LAYOUTS)
+   ========================================================================== */
+.main-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+@media(min-width: 1024px) {
+  .game-grid {
+    grid-template-columns: 350px 1fr;
+  }
+}
+
+.tabs-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid currentColor;
+  padding-bottom: 0.5rem;
+}
+
+.tab-btn {
+  font-size: inherit;
+  padding: 0.4rem 1rem !important;
+}
+
+.tab-btn.active {
+  background-color: currentColor !important;
+  color: #000 !important;
+}
+
+.scrollable-logs {
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: 'Share Tech Mono', Courier, monospace;
+}
+
+.stock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.stock-card {
+  padding: 1rem;
+  border: 1px solid currentColor;
+}
+
+.gacha-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.gacha-card {
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  animation: cardFloat 3s ease-in-out infinite alternate;
+}
+
+@keyframes cardFloat {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-6px); }
+}
+
+.gacha-card.common { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
+.gacha-card.rare { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+.gacha-card.legendary { border-color: #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.6); }
+
+/* Gacha Animation Portal */
+.portal-glow {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,1) 0%, rgba(99,102,241,0.5) 50%, rgba(0,0,0,0) 100%);
+  margin: 1.5rem auto;
+  animation: pulsePortal 2s infinite alternate;
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.8);
+}
+
+@keyframes pulsePortal {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.1); opacity: 1; }
+}
+
+.feature-popup-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+.feature-popup {
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  animation: popupScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popupScale {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "MIN-MAXXED",
+  "short_name": "MIN-MAXXED",
+  "description": "The Min-Maxer's Optimization Playground",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080313",
+  "theme_color": "#080313",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

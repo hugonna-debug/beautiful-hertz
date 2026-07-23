@@ -1,0 +1,10 @@
+.dockerignore
+.git
+.gitignore
+node_modules/
+dist/
+build.log
+build_output.log
+build_output.txt
+.agents/
+scratch/
