@@ -680,24 +680,6 @@ export const CharacterCreator: React.FC<CharacterCreatorProps> = ({ state, onUpd
                 </button>
 
                 <button
-                  onClick={() => setActiveTab('equipment' as any)}
-                  style={{
-                    padding: '0.35rem 0.65rem',
-                    fontSize: '0.7rem',
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
-                    background: activeTab === 'equipment' ? 'var(--neon-cyan)' : 'transparent',
-                    color: activeTab === 'equipment' ? '#000000' : (state.darkMode ? '#a1a1aa' : '#71717a'),
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  Clothing & Wings
-                </button>
-
-                <button
                   onClick={() => setActiveTab('wings' as any)}
                   style={{
                     padding: '0.35rem 0.65rem',

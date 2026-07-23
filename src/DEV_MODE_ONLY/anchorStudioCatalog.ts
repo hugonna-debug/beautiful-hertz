@@ -80,6 +80,14 @@ export interface WeaponPipelineStats {
 export interface UnverifiedWeapon {
   name: string;
   url: string;
+  anchor?: {
+    baseX: number;
+    baseY: number;
+    tipX: number;
+    tipY: number;
+    angle: number;
+    distance: number;
+  };
 }
 
 export async function fetchPipelineStats(): Promise<WeaponPipelineStats> {
@@ -89,6 +97,18 @@ export async function fetchPipelineStats(): Promise<WeaponPipelineStats> {
 
 export async function fetchUnverifiedWeapons(): Promise<UnverifiedWeapon[]> {
   const res = await fetch('/dev-api/weapons/unverified');
+  const data = await res.json();
+  return data.weapons;
+}
+
+export async function fetchAnchoredWeapons(): Promise<UnverifiedWeapon[]> {
+  const res = await fetch('/dev-api/weapons/anchored');
+  const data = await res.json();
+  return data.weapons;
+}
+
+export async function fetchSkippedWeapons(): Promise<UnverifiedWeapon[]> {
+  const res = await fetch('/dev-api/weapons/skipped');
   const data = await res.json();
   return data.weapons;
 }
@@ -105,8 +125,26 @@ export async function anchorWeapon(
   return res.json();
 }
 
+export async function unanchorWeapon(filename: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch('/dev-api/weapons/unanchor', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename }),
+  });
+  return res.json();
+}
+
 export async function skipWeapon(filename: string): Promise<{ success: boolean; message: string }> {
   const res = await fetch('/dev-api/weapons/skip', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename }),
+  });
+  return res.json();
+}
+
+export async function unskipWeapon(filename: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch('/dev-api/weapons/unskip', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ filename }),

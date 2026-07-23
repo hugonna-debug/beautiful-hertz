@@ -13,8 +13,12 @@ import {
   UnverifiedWeapon,
   fetchPipelineStats,
   fetchUnverifiedWeapons,
+  fetchAnchoredWeapons,
+  fetchSkippedWeapons,
   anchorWeapon,
+  unanchorWeapon,
   skipWeapon,
+  unskipWeapon,
 } from './anchorStudioCatalog';
 
 interface AnchorStudioProps {
@@ -43,6 +47,7 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
   const [arenaSaveMsg, setArenaSaveMsg] = useState<string | null>(null);
 
   // Mode 2 State
+  const [pipelineTab, setPipelineTab] = useState<'unverified' | 'anchored' | 'skipped'>('unverified');
   const [batchSprites, setBatchSprites] = useState<SpriteBatchItem[]>([]);
   const [batchViewMode, setBatchViewMode] = useState<'grid' | 'rapid'>('rapid');
   const [activeBatchIndex, setActiveBatchIndex] = useState<number>(0);
@@ -57,16 +62,27 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const batchCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Fetch unverified weapons from dev API when switching to batch mode
-  const loadUnverifiedWeapons = useCallback(async () => {
+  // Fetch weapons from dev API based on active pipeline tab (unverified / anchored / skipped)
+  const loadPipelineWeapons = useCallback(async (tab: 'unverified' | 'anchored' | 'skipped' = pipelineTab) => {
     setPipelineLoading(true);
     try {
-      const [weapons, stats] = await Promise.all([fetchUnverifiedWeapons(), fetchPipelineStats()]);
+      const statsPromise = fetchPipelineStats();
+      let weaponsPromise: Promise<UnverifiedWeapon[]>;
+      if (tab === 'anchored') weaponsPromise = fetchAnchoredWeapons();
+      else if (tab === 'skipped') weaponsPromise = fetchSkippedWeapons();
+      else weaponsPromise = fetchUnverifiedWeapons();
+
+      const [weapons, stats] = await Promise.all([weaponsPromise, statsPromise]);
       setBatchSprites(weapons.map(w => ({
-        id: w.name.replace(/\.(png|PNG)$/i, ''),
-        name: w.name.replace(/\.(png|PNG)$/i, '').replace(/[_-]/g, ' '),
+        id: w.name.replace(/\.(png|jpg|jpeg|gif|webp|bmp)$/i, ''),
+        name: w.name.replace(/\.(png|jpg|jpeg|gif|webp|bmp)$/i, '').replace(/[_-]/g, ' '),
         url: w.url,
         category: 'weapon' as const,
+        baseAnchor: w.anchor ? { x: w.anchor.baseX, y: w.anchor.baseY } : undefined,
+        tipAnchor: w.anchor ? { x: w.anchor.tipX, y: w.anchor.tipY } : undefined,
+        angle: w.anchor?.angle,
+        distance: w.anchor?.distance,
+        isMarked: !!w.anchor,
       })));
       setPipelineStats(stats);
       setActiveBatchIndex(0);
@@ -76,13 +92,13 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
     } finally {
       setPipelineLoading(false);
     }
-  }, []);
+  }, [pipelineTab]);
 
   useEffect(() => {
     if (studioMode === 'mode2_batch') {
-      loadUnverifiedWeapons();
+      loadPipelineWeapons(pipelineTab);
     }
-  }, [studioMode, loadUnverifiedWeapons]);
+  }, [studioMode, pipelineTab, loadPipelineWeapons]);
 
   // Clear pipeline messages after 3s
   useEffect(() => {
@@ -233,6 +249,86 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
     ctx.fillText('HANDLE BASE', bx + 10, by - 6);
 
   }, [studioMode, currentSpec, action, direction, frameIndex]);
+
+  // Render Vector Overlay on Mode 2 Batch Canvas (Visual Indicators for Grip & Orientation Tip)
+  useEffect(() => {
+    if (studioMode !== 'mode2_batch' || batchViewMode !== 'rapid') return;
+    const canvas = batchCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const sprite = batchSprites[activeBatchIndex];
+    if (!sprite) return;
+
+    const scale = canvas.width / 64;
+
+    if (sprite.baseAnchor) {
+      const bx = sprite.baseAnchor.x * scale;
+      const by = sprite.baseAnchor.y * scale;
+
+      if (sprite.tipAnchor) {
+        const tx = sprite.tipAnchor.x * scale;
+        const ty = sprite.tipAnchor.y * scale;
+        const distPx = (sprite.distance || 35) * scale;
+
+        // Fixed Distance Orbit Circle
+        ctx.beginPath();
+        ctx.arc(bx, by, distPx, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+
+        // Vector Line connecting Grip Base to Tip
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(tx, ty);
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([]);
+        ctx.stroke();
+
+        // Draw Tip Point (Blue Circle)
+        ctx.beginPath();
+        ctx.arc(tx, ty, 7, 0, Math.PI * 2);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Tip Text Label
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`TIP (${sprite.angle ?? 0}°)`, tx + 10, ty + 4);
+      } else {
+        // Highlight pulsing ring for grip point while awaiting tip click
+        ctx.beginPath();
+        ctx.arc(bx, by, 16, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(16, 185, 129, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3, 3]);
+        ctx.stroke();
+      }
+
+      // Draw Base Handle Point (Green Circle)
+      ctx.beginPath();
+      ctx.arc(bx, by, 7, 0, Math.PI * 2);
+      ctx.fillStyle = '#10b981';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Base Label
+      ctx.font = 'bold 11px Inter, sans-serif';
+      ctx.fillStyle = '#10b981';
+      ctx.fillText('GRIP BASE', bx + 10, by - 6);
+    }
+  }, [studioMode, batchViewMode, activeBatchIndex, batchSprites, batchClickStep]);
 
   // Click on Mode 1 Canvas to set 2-Point Vector Anchors
   const handleMode1CanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -483,6 +579,46 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
       setPipelineMessage(`⏭️ ${result.message}`);
       setBatchSprites(prev => prev.filter((_, i) => i !== activeBatchIndex));
       setActiveBatchIndex(i => Math.min(i, batchSprites.length - 2));
+      setBatchClickStep('base');
+      const stats = await fetchPipelineStats();
+      setPipelineStats(stats);
+    } catch (err: any) {
+      setPipelineMessage(`❌ Error: ${err.message}`);
+    } finally {
+      setPipelineLoading(false);
+    }
+  };
+
+  const handleUnanchorWeapon = async () => {
+    const sprite = batchSprites[activeBatchIndex];
+    if (!sprite) return;
+    setPipelineLoading(true);
+    try {
+      const filename = sprite.url.split('/').pop() || '';
+      const result = await unanchorWeapon(filename);
+      setPipelineMessage(`🔓 ${result.message}`);
+      setBatchSprites(prev => prev.filter((_, i) => i !== activeBatchIndex));
+      setActiveBatchIndex(i => Math.min(i, Math.max(0, batchSprites.length - 2)));
+      setBatchClickStep('base');
+      const stats = await fetchPipelineStats();
+      setPipelineStats(stats);
+    } catch (err: any) {
+      setPipelineMessage(`❌ Error: ${err.message}`);
+    } finally {
+      setPipelineLoading(false);
+    }
+  };
+
+  const handleUnskipWeapon = async () => {
+    const sprite = batchSprites[activeBatchIndex];
+    if (!sprite) return;
+    setPipelineLoading(true);
+    try {
+      const filename = sprite.url.split('/').pop() || '';
+      const result = await unskipWeapon(filename);
+      setPipelineMessage(`↩️ ${result.message}`);
+      setBatchSprites(prev => prev.filter((_, i) => i !== activeBatchIndex));
+      setActiveBatchIndex(i => Math.min(i, Math.max(0, batchSprites.length - 2)));
       setBatchClickStep('base');
       const stats = await fetchPipelineStats();
       setPipelineStats(stats);
@@ -952,20 +1088,40 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
       {/* ========================================================================= */}
       {studioMode === 'mode2_batch' && (
         <div>
-          {/* PIPELINE STATS BAR */}
+          {/* PIPELINE STATS BAR / TAB SELECTOR */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.8rem', marginBottom: '1.5rem' }}>
             {[
-              { label: 'Unverified', value: pipelineStats.unverified, color: '#f59e0b', icon: '📂' },
-              { label: 'Anchored', value: pipelineStats.anchored, color: '#10b981', icon: '✅' },
-              { label: 'Skipped', value: pipelineStats.skipped, color: '#ef4444', icon: '⏭️' },
-              { label: 'Total', value: pipelineStats.total, color: '#06b6d4', icon: '📊' },
-            ].map(s => (
-              <div key={s.label} style={{ backgroundColor: '#121827', padding: '1rem', borderRadius: '10px', border: '1px solid #1f293d', textAlign: 'center' }}>
-                <div style={{ fontSize: '1.5rem' }}>{s.icon}</div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 900, color: s.color }}>{s.value}</div>
-                <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05rem' }}>{s.label}</div>
-              </div>
-            ))}
+              { id: 'unverified', label: 'Unverified', value: pipelineStats.unverified, color: '#f59e0b', icon: '📂' },
+              { id: 'anchored', label: 'Anchored', value: pipelineStats.anchored, color: '#10b981', icon: '✅' },
+              { id: 'skipped', label: 'Skipped', value: pipelineStats.skipped, color: '#ef4444', icon: '⏭️' },
+              { id: 'total', label: 'Total Ingestion', value: pipelineStats.total, color: '#06b6d4', icon: '📊' },
+            ].map(s => {
+              const isTab = s.id !== 'total';
+              const isActive = pipelineTab === s.id;
+              return (
+                <div
+                  key={s.label}
+                  onClick={() => isTab && setPipelineTab(s.id as any)}
+                  style={{
+                    backgroundColor: isActive ? '#1e293b' : '#121827',
+                    padding: '1rem',
+                    borderRadius: '10px',
+                    border: isActive ? `2px solid ${s.color}` : '1px solid #1f293d',
+                    textAlign: 'center',
+                    cursor: isTab ? 'pointer' : 'default',
+                    transition: 'all 0.2s ease',
+                    boxShadow: isActive ? `0 0 16px ${s.color}33` : undefined,
+                    transform: isActive ? 'scale(1.02)' : 'none'
+                  }}
+                >
+                  <div style={{ fontSize: '1.5rem' }}>{s.icon}</div>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 900, color: s.color }}>{s.value}</div>
+                  <div style={{ fontSize: '0.75rem', color: isActive ? '#fff' : '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05rem' }}>
+                    {s.label} {isTab && isActive ? '(VIEWING)' : ''}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* PIPELINE MESSAGE TOAST */}
@@ -978,7 +1134,9 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
           {/* BATCH HEADER CONTROLS */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#121827', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid #1f293d', marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, color: '#38bdf8' }}>⚔️ Weapon Anchor Pipeline</h3>
+              <h3 style={{ margin: 0, color: '#38bdf8' }}>
+                ⚔️ {pipelineTab === 'anchored' ? 'Anchored Weapons Library' : pipelineTab === 'skipped' ? 'Skipped Weapons Folder' : 'Unverified Weapon Pipeline'}
+              </h3>
               
               <div style={{ display: 'flex', gap: '0.4rem', backgroundColor: '#0f172a', padding: '0.2rem', borderRadius: '6px', border: '1px solid #334155' }}>
                 <button
@@ -996,7 +1154,7 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
               </div>
 
               <button
-                onClick={loadUnverifiedWeapons}
+                onClick={() => loadPipelineWeapons(pipelineTab)}
                 disabled={pipelineLoading}
                 style={{ padding: '0.4rem 0.8rem', borderRadius: '4px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#94a3b8', fontWeight: 700, cursor: 'pointer' }}
               >
@@ -1004,8 +1162,8 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
               </button>
             </div>
 
-            <div style={{ color: '#f59e0b', fontWeight: 800 }}>
-              {pipelineLoading ? '⏳ Loading...' : `${batchSprites.length} weapons awaiting anchor points`}
+            <div style={{ color: pipelineTab === 'anchored' ? '#10b981' : pipelineTab === 'skipped' ? '#ef4444' : '#f59e0b', fontWeight: 800 }}>
+              {pipelineLoading ? '⏳ Loading...' : `${batchSprites.length} ${pipelineTab} weapons`}
             </div>
           </div>
 
@@ -1013,8 +1171,12 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
           {!pipelineLoading && batchSprites.length === 0 && (
             <div style={{ textAlign: 'center', padding: '4rem', backgroundColor: '#121827', borderRadius: '12px', border: '1px solid #1f293d' }}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
-              <h3 style={{ color: '#10b981', margin: '0 0 0.5rem 0' }}>All weapons processed!</h3>
-              <p style={{ color: '#94a3b8', margin: 0 }}>No unverified weapons remaining. Add new sprite PNGs to<br/><code style={{ color: '#06b6d4' }}>public/assets/unverified_weapons/</code> and click Refresh.</p>
+              <h3 style={{ color: '#10b981', margin: '0 0 0.5rem 0' }}>No {pipelineTab} weapons!</h3>
+              <p style={{ color: '#94a3b8', margin: 0 }}>
+                {pipelineTab === 'unverified'
+                  ? 'No unverified weapons remaining. Add new sprite PNGs to public/assets/unverified_weapons/ and click Refresh.'
+                  : `No assets currently in the ${pipelineTab} folder.`}
+              </p>
             </div>
           )}
 
@@ -1051,13 +1213,33 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
 
                 {/* ACTION BUTTONS ROW */}
                 <div style={{ display: 'flex', gap: '0.8rem', marginTop: '1.5rem', width: '384px' }}>
-                  <button
-                    onClick={handleSkipWeapon}
-                    disabled={pipelineLoading}
-                    style={{ flex: 1, padding: '0.8rem', backgroundColor: '#7f1d1d', color: '#fca5a5', border: '1px solid #991b1b', borderRadius: '6px', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}
-                  >
-                    ⏭️ SKIP
-                  </button>
+                  {pipelineTab === 'unverified' && (
+                    <button
+                      onClick={handleSkipWeapon}
+                      disabled={pipelineLoading}
+                      style={{ flex: 1, padding: '0.8rem', backgroundColor: '#7f1d1d', color: '#fca5a5', border: '1px solid #991b1b', borderRadius: '6px', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}
+                    >
+                      ⏭️ SKIP
+                    </button>
+                  )}
+                  {pipelineTab === 'anchored' && (
+                    <button
+                      onClick={handleUnanchorWeapon}
+                      disabled={pipelineLoading}
+                      style={{ flex: 1, padding: '0.8rem', backgroundColor: '#451a03', color: '#fde047', border: '1px solid #78350f', borderRadius: '6px', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}
+                    >
+                      🔓 UNANCHOR
+                    </button>
+                  )}
+                  {pipelineTab === 'skipped' && (
+                    <button
+                      onClick={handleUnskipWeapon}
+                      disabled={pipelineLoading}
+                      style={{ flex: 1, padding: '0.8rem', backgroundColor: '#1e3a8a', color: '#93c5fd', border: '1px solid #1d4ed8', borderRadius: '6px', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}
+                    >
+                      ↩️ UNSKIP
+                    </button>
+                  )}
                   <button
                     onClick={prevBatchItem}
                     disabled={activeBatchIndex === 0}
@@ -1072,13 +1254,15 @@ export const AnchorStudio: React.FC<AnchorStudioProps> = ({ state }) => {
                   >
                     NEXT ▶
                   </button>
-                  <button
-                    onClick={handleAnchorAndAdvance}
-                    disabled={pipelineLoading || !activeSprite.baseAnchor || !activeSprite.tipAnchor}
-                    style={{ flex: 2, padding: '0.8rem', backgroundColor: (!activeSprite.baseAnchor || !activeSprite.tipAnchor) ? '#1e293b' : '#10b981', color: (!activeSprite.baseAnchor || !activeSprite.tipAnchor) ? '#64748b' : '#090d16', border: 'none', borderRadius: '6px', fontWeight: 900, cursor: 'pointer', fontSize: '0.9rem' }}
-                  >
-                    ✅ ANCHOR & SAVE
-                  </button>
+                  {pipelineTab !== 'skipped' && (
+                    <button
+                      onClick={handleAnchorAndAdvance}
+                      disabled={pipelineLoading || !activeSprite.baseAnchor || !activeSprite.tipAnchor}
+                      style={{ flex: 2, padding: '0.8rem', backgroundColor: (!activeSprite.baseAnchor || !activeSprite.tipAnchor) ? '#1e293b' : '#10b981', color: (!activeSprite.baseAnchor || !activeSprite.tipAnchor) ? '#64748b' : '#090d16', border: 'none', borderRadius: '6px', fontWeight: 900, cursor: 'pointer', fontSize: '0.9rem' }}
+                    >
+                      {pipelineTab === 'anchored' ? '💾 UPDATE ANCHOR' : '✅ ANCHOR & SAVE'}
+                    </button>
+                  )}
                 </div>
 
                 {/* COUNTER */}

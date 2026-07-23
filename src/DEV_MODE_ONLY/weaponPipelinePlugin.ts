@@ -170,6 +170,52 @@ export function weaponPipelinePlugin(): Plugin {
           return;
         }
 
+        // ── GET /dev-api/weapons/skipped ────────────────────────────
+        if (req.method === 'GET' && req.url === '/dev-api/weapons/skipped') {
+          const files = fs.readdirSync(SKIPPED_DIR)
+            .filter(f => /\.(png|jpg|jpeg|gif|webp|bmp)$/i.test(f))
+            .sort()
+            .map(name => ({
+              name,
+              url: `/assets/skipped_weapons/${name}`,
+            }));
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ count: files.length, weapons: files }));
+          return;
+        }
+
+        // ── POST /dev-api/weapons/unanchor ──────────────────────────
+        // Body: { filename: string } — move back from anchored to unverified
+        if (req.method === 'POST' && req.url === '/dev-api/weapons/unanchor') {
+          let body = '';
+          req.on('data', chunk => body += chunk);
+          req.on('end', () => {
+            try {
+              const { filename } = JSON.parse(body);
+              const srcPath = path.join(ANCHORED_DIR, filename);
+              const destPath = path.join(UNVERIFIED_DIR, filename);
+              const jsonFilename = filename.replace(/\.(png|jpg|jpeg|gif|webp|bmp)$/i, '.anchor.json');
+              const jsonPath = path.join(ANCHORED_DIR, jsonFilename);
+
+              if (!fs.existsSync(srcPath)) {
+                res.statusCode = 404;
+                res.end(JSON.stringify({ error: `Not in anchored: ${filename}` }));
+                return;
+              }
+              fs.copyFileSync(srcPath, destPath);
+              fs.unlinkSync(srcPath);
+              if (fs.existsSync(jsonPath)) fs.unlinkSync(jsonPath);
+
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: true, message: `Unanchored: ${filename}` }));
+            } catch (err: any) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: err.message }));
+            }
+          });
+          return;
+        }
+
         // ── GET /dev-api/weapons/stats ──────────────────────────────
         if (req.method === 'GET' && req.url === '/dev-api/weapons/stats') {
           const unverified = fs.readdirSync(UNVERIFIED_DIR).filter(f => /\.(png|jpg|jpeg|gif|webp|bmp)$/i.test(f)).length;
